@@ -145,7 +145,7 @@ class EncountersController < ApplicationController
     scope = scope.where(status: params[:status]) if params[:status].present?
     scope = scope.where(appointment_type: params[:appointment_type]) if params[:appointment_type].present?
     if params[:q].present?
-      scope = scope.joins(:patient).where("patients.name LIKE ?", "%#{params[:q]}%")
+      scope = scope.joins(:patient).where("patients.name ILIKE ?", "%#{params[:q]}%")
     end
 
     today_appointments = scope.for_day(Date.current).ordered

@@ -1,10 +1,6 @@
 class Encounter < ApplicationRecord
   audited associated_with: :patient
 
-  # MariaDB não tem um tipo JSON nativo de verdade (a coluna vira LONGTEXT), então o
-  # Rails não faz o cast automático — precisamos serializar explicitamente.
-  serialize :custom_fields, coder: JSON, type: Array
-
   belongs_to :appointment
   belongs_to :patient
   belongs_to :professional

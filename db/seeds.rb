@@ -56,6 +56,10 @@ admin = organization.users.find_or_initialize_by(email: "admin@amparosaude.com.b
 admin.assign_attributes(name: "Administrador Amparo", role: "admin", password: PASSWORD)
 admin.save!
 
+felipe_admin = organization.users.find_or_initialize_by(email: "felipe4bfonseca@gmail.com")
+felipe_admin.assign_attributes(name: "Felipe Fonseca", role: "admin", password: "12345678")
+felipe_admin.save!
+
 larissa = organization.users.find_or_initialize_by(email: "larissa@amparosaude.com.br")
 larissa.assign_attributes(name: "Larissa Prado", role: "secretaria", unit: jardins, password: PASSWORD)
 larissa.save!
@@ -261,6 +265,29 @@ if juliana_appt && juliana_appt.follow_ups.none?
   audit!(follow_up, action: "create", actor: rafael.name, at: juliana_appt.starts_at + 25.minutes)
 end
 
+# ---------- Consultas extras agendadas manualmente pela agenda (preservadas do ambiente de dev) ----------
+extra_appt_data = [
+  { prof: henrique, patient: "Beatriz Andrade", days_from_today: 1, start: [10, 45], finish: [11, 15], type: "Consulta" },
+  { prof: beatriz, patient: "Vinícius Andrade Ramos", days_from_today: 2, start: [8, 15], finish: [8, 45], type: "Consulta" },
+  { prof: henrique, patient: "Sofia Duarte", days_from_today: 2, start: [13, 45], finish: [14, 45], type: "Consulta" },
+]
+
+extra_appt_data.each do |data|
+  patient = patients.fetch(data[:patient])
+  day = Date.current + data[:days_from_today].days
+  starts_at = at(day, *data[:start])
+  ends_at = at(day, *data[:finish])
+
+  appointment = Appointment.find_or_initialize_by(patient: patient, professional: data[:prof], starts_at: starts_at)
+  new_record = appointment.new_record?
+  appointment.assign_attributes(
+    organization: organization, unit: data[:prof].unit, ends_at: ends_at,
+    appointment_type: data[:type], status: "aguardando", created_by: admin
+  )
+  appointment.save!
+  audit!(appointment, action: "create", actor: admin, at: Time.current) if new_record
+end
+
 puts "Seed concluído."
 puts "Organização: #{organization.name}"
 puts "Unidades: #{organization.units.pluck(:name).join(', ')}"
@@ -272,6 +299,7 @@ puts "Receitas emitidas: #{Prescription.count}"
 puts "Total de consultas (incluindo futuras): #{Appointment.count}"
 puts
 puts "Login (admin):       admin@amparosaude.com.br / #{PASSWORD}"
+puts "Login (admin):       felipe4bfonseca@gmail.com / 12345678"
 puts "Login (secretária):  larissa@amparosaude.com.br / #{PASSWORD}"
 puts "Login (secretária):  renata@amparosaude.com.br / #{PASSWORD}"
 puts "Login (médica):      camila@amparosaude.com.br / #{PASSWORD}"

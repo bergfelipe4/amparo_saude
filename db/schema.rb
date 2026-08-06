@@ -11,7 +11,10 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
-  create_table "active_storage_attachments", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -21,7 +24,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
-  create_table "active_storage_blobs", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "active_storage_blobs", force: :cascade do |t|
     t.bigint "byte_size", null: false
     t.string "checksum"
     t.string "content_type"
@@ -33,13 +36,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
-  create_table "active_storage_variant_records", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "active_storage_variant_records", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "appointment_permissions", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "appointment_permissions", force: :cascade do |t|
     t.bigint "appointment_id", null: false
     t.datetime "created_at", null: false
     t.bigint "granted_by_id", null: false
@@ -51,7 +54,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["user_id"], name: "index_appointment_permissions_on_user_id"
   end
 
-  create_table "appointments", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "appointments", force: :cascade do |t|
     t.string "appointment_type", null: false
     t.datetime "created_at", null: false
     t.bigint "created_by_id"
@@ -73,7 +76,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["unit_id"], name: "index_appointments_on_unit_id"
   end
 
-  create_table "audits", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "audits", force: :cascade do |t|
     t.string "action"
     t.integer "associated_id"
     t.string "associated_type"
@@ -95,13 +98,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["user_id", "user_type"], name: "user_index"
   end
 
-  create_table "encounters", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "encounters", force: :cascade do |t|
     t.bigint "appointment_id", null: false
     t.text "assessment"
     t.string "blood_pressure"
     t.text "chief_complaint"
     t.datetime "created_at", null: false
-    t.text "custom_fields", size: :long, collation: "utf8mb4_bin"
+    t.jsonb "custom_fields"
     t.string "diagnosis"
     t.integer "heart_rate"
     t.decimal "height_cm", precision: 5, scale: 1
@@ -118,14 +121,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["professional_id"], name: "index_encounters_on_professional_id"
   end
 
-  create_table "organizations", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "organizations", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
     t.string "slug"
     t.datetime "updated_at", null: false
   end
 
-  create_table "patients", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "patients", force: :cascade do |t|
     t.string "address"
     t.string "allergy"
     t.date "birth_date"
@@ -136,7 +139,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.string "cpf"
     t.datetime "created_at", null: false
     t.text "current_medications"
-    t.text "custom_fields", size: :long, collation: "utf8mb4_bin"
+    t.jsonb "custom_fields"
     t.string "email"
     t.string "emergency_contact_name"
     t.string "emergency_contact_phone"
@@ -150,7 +153,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["organization_id"], name: "index_patients_on_organization_id"
   end
 
-  create_table "prescription_items", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "prescription_items", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "dosage"
     t.string "duration"
@@ -163,7 +166,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["prescription_id"], name: "index_prescription_items_on_prescription_id"
   end
 
-  create_table "prescriptions", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "prescriptions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "encounter_id", null: false
     t.datetime "issued_at"
@@ -178,7 +181,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["professional_id"], name: "index_prescriptions_on_professional_id"
   end
 
-  create_table "professionals", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "professionals", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "crm"
     t.string "name"
@@ -190,7 +193,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["unit_id"], name: "index_professionals_on_unit_id"
   end
 
-  create_table "units", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "units", force: :cascade do |t|
     t.string "address"
     t.datetime "created_at", null: false
     t.string "name"
@@ -200,7 +203,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["organization_id"], name: "index_units_on_organization_id"
   end
 
-  create_table "users", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+  create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.string "name", null: false
