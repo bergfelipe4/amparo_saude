@@ -1,0 +1,31 @@
+<% content_for :title, "Entrar" %>
+
+<div class="w-full max-w-sm">
+  <div class="flex items-center gap-2.5 mb-8 justify-center">
+    <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background: var(--color-accent);">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M2 13H8L10 6L14 19L16 13H22" stroke="#FBF5FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="text-xl font-semibold" style="font-family: var(--font-display);">Amparo Saúde</div>
+  </div>
+
+  <div class="card p-7">
+    <h1 class="text-lg font-semibold mb-1">Entrar</h1>
+    <p class="text-sm mb-5" style="color: var(--color-text-muted);">Acesse com seu e-mail e senha da clínica.</p>
+
+    <% if alert %>
+      <div class="mb-4 px-3 py-2 rounded-lg text-sm chip-faltou"><%= alert %></div>
+    <% end %>
+
+    <%= form_with url: login_path, method: :post, class: "flex flex-col gap-4" do %>
+      <div>
+        <label class="block text-xs uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">E-mail</label>
+        <input type="email" name="email" required autofocus class="field-input" placeholder="voce@amparosaude.com.br" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Senha</label>
+        <input type="password" name="password" required class="field-input" placeholder="••••••••" />
+      </div>
+      <button type="submit" class="btn btn-primary justify-center mt-1">Entrar</button>
+    <% end %>
+  </div>
+</div>

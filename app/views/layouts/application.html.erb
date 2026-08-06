@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Amparo Saúde" %></title>
+    <script>
+      (function () {
+        var stored = localStorage.getItem("theme");
+        var theme = stored || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Amparo Saúde">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%# Desliga o pré-carregamento por hover do Turbo: numa agenda com dados clínicos
+        mudando via drag-and-drop, um link pré-buscado ao passar o mouse pode ficar em
+        cache por alguns segundos e mostrar informação desatualizada (ex: médico antigo)
+        se o usuário clicar logo depois de mover uma consulta. %>
+    <meta name="turbo-prefetch" content="false">
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="min-h-screen" style="background: var(--color-bg); color: var(--color-text); overflow-x: hidden;">
+    <% if current_user %>
+      <div class="grid min-h-screen grid-cols-1 lg:grid-cols-[236px_1fr]" data-controller="sidebar">
+        <div class="sidebar-backdrop hidden lg:hidden" data-sidebar-target="backdrop" data-action="click->sidebar#close"></div>
+        <aside class="app-sidebar p-4 flex flex-col gap-5 border-r lg:sticky lg:top-0 lg:h-screen" data-sidebar-target="panel" style="background: var(--color-surface); border-color: var(--color-border);">
+          <div class="flex items-center gap-2.5 px-1.5">
+            <div class="w-[30px] h-[30px] rounded-lg flex items-center justify-center flex-shrink-0" style="background: var(--color-accent);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 13H8L10 6L14 19L16 13H22" stroke="#FBF5FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="min-w-0">
+              <div class="font-semibold" style="font-family: var(--font-display);">Amparo Saúde</div>
+              <span class="block text-[0.625rem] uppercase tracking-wide font-mono" style="color: var(--color-text-muted);">sistema interno</span>
+            </div>
+            <button type="button" class="btn btn-ghost ml-auto lg:hidden" data-action="sidebar#close" aria-label="Fechar menu" style="padding:6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+
+          <div class="w-full text-left rounded-[10px] px-2.5 py-2.5 border" style="background: var(--color-surface-2); border-color: var(--color-border);">
+            <span class="block text-[0.7rem] uppercase tracking-wide" style="color: var(--color-text-muted);">Unidade</span>
+            <span class="font-semibold text-sm"><%= current_user.unit&.name || "Todas" %></span>
+          </div>
+
+          <nav class="flex flex-col gap-0.5" aria-label="Navegação principal">
+            <%= link_to dashboard_path, class: "nav-item #{'active' if current_page?(dashboard_path)}" do %>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>
+              Painel
+            <% end %>
+            <%= link_to agenda_path, class: "nav-item #{'active' if current_page?(agenda_path)}" do %>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>
+              Agenda
+            <% end %>
+            <%= link_to patients_path, class: "nav-item #{'active' if controller_name == 'patients'}" do %>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20c1.4-4 4-6 7.5-6s6.1 2 7.5 6"/></svg>
+              Pacientes
+            <% end %>
+            <%= link_to encounters_path, class: "nav-item #{'active' if controller_name == 'encounters'}" do %>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v4h4M9 13h6M9 16.5h6"/></svg>
+              Atendimento
+            <% end %>
+            <% if current_user.admin? %>
+              <%= link_to admin_overview_path, class: "nav-item #{'active' if controller_name == 'admin'}" do %>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+                Administração
+              <% end %>
+            <% end %>
+          </nav>
+
+          <div class="mt-auto flex items-center gap-2.5 pt-3.5 border-t" style="border-color: var(--color-border);">
+            <div class="avatar"><%= current_user.initials %></div>
+            <div class="min-w-0">
+              <div class="text-[0.8125rem] font-semibold leading-tight truncate"><%= current_user.name %></div>
+              <div class="text-[0.6875rem]" style="color: var(--color-text-muted);"><%= current_user.display_role %></div>
+            </div>
+            <%= button_to "Sair", logout_path, method: :delete, class: "ml-auto text-xs font-semibold", style: "color: var(--color-accent); background:none; border:none; cursor:pointer;" %>
+          </div>
+        </aside>
+
+        <main class="min-w-0">
+          <header class="px-4 lg:px-7 py-3 lg:py-4 border-b sticky top-0 z-10 flex items-center justify-between gap-3 lg:gap-5" style="background: var(--color-surface); border-color: var(--color-border);">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <button type="button" class="btn btn-ghost lg:hidden flex-shrink-0" data-action="sidebar#open" aria-label="Abrir menu" style="padding:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+              </button>
+              <div class="min-w-0">
+                <h1 class="text-lg lg:text-[1.375rem] font-semibold truncate"><%= content_for(:title) || "Painel" %></h1>
+                <% if content_for?(:subtitle) %>
+                  <div class="text-xs lg:text-[0.8125rem] mt-0.5 truncate" style="color: var(--color-text-muted);"><%= content_for(:subtitle) %></div>
+                <% end %>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost theme-toggle flex-shrink-0" data-controller="theme" data-action="theme#toggle" aria-label="Alternar tema claro/escuro" title="Alternar tema claro/escuro">
+              <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg>
+              <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7.2 7.2 0 0 0 21 12.8Z"/></svg>
+            </button>
+          </header>
+
+          <div class="px-4 lg:px-7 py-4 lg:py-6 pb-12">
+            <% if notice %><div class="mb-4 px-4 py-2.5 rounded-lg text-sm chip-confirmado"><%= notice %></div><% end %>
+            <% if alert %><div class="mb-4 px-4 py-2.5 rounded-lg text-sm chip-faltou"><%= alert %></div><% end %>
+            <%= yield %>
+          </div>
+        </main>
+      </div>
+
+      <%= turbo_frame_tag "modal" %>
+    <% else %>
+      <main class="min-h-screen flex items-center justify-center px-5">
+        <%= yield %>
+      </main>
+    <% end %>
+  </body>
+</html>

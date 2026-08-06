@@ -1,0 +1,290 @@
+<% if @appointment %>
+  <% patient = @appointment.patient %>
+
+  <div class="card p-4 mb-3.5">
+    <div class="flex justify-between items-start flex-wrap gap-2.5">
+      <div>
+        <h2 class="text-[1.1875rem] font-semibold"><%= link_to patient.name, patient_path(patient), style: "color:inherit;", data: { turbo_frame: "_top" } %></h2>
+        <div class="flex gap-2 flex-wrap mt-1.5">
+          <span class="chip chip-neutral"><%= patient.age %> anos</span>
+          <span class="chip chip-neutral"><%= patient.convenio %><%= patient.carteirinha.present? ? " · carteirinha #{patient.carteirinha}" : "" %></span>
+          <% if patient.guardian_name.present? %><span class="chip chip-neutral">Resp.: <%= patient.guardian_name %></span><% end %>
+          <% if patient.allergy.present? %><span class="chip chip-faltou">Alergia: <%= patient.allergy %></span><% end %>
+        </div>
+      </div>
+      <span class="chip chip-<%= @appointment.status %>" style="font-size:0.75rem; padding:5px 10px;"><%= @appointment.status_label %></span>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t text-sm" style="border-color: var(--color-border);">
+      <div>
+        <div class="text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Data e horário</div>
+        <div class="font-mono"><%= @appointment.starts_at.strftime("%d/%m/%Y %H:%M") %>–<%= @appointment.ends_at.strftime("%H:%M") %></div>
+      </div>
+      <div>
+        <div class="text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Tipo</div>
+        <div><%= @appointment.appointment_type %></div>
+      </div>
+      <div>
+        <div class="text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Profissional</div>
+        <div><%= @appointment.professional.name %> · <span style="color: var(--color-text-muted);"><%= @appointment.professional.crm %></span></div>
+      </div>
+      <div>
+        <div class="text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Unidade</div>
+        <div><%= @appointment.unit.name %></div>
+      </div>
+    </div>
+
+    <% if @appointment.follow_up_of %>
+      <div class="mt-3 text-sm">
+        Retorno da consulta de <%= link_to @appointment.follow_up_of.starts_at.strftime("%d/%m/%Y"), encounter_path(@appointment.follow_up_of), style: "color: var(--color-accent); font-weight:600;" %>
+      </div>
+    <% end %>
+    <% @appointment.follow_ups.each do |fu| %>
+      <div class="mt-3 text-sm">
+        Retorno agendado: <%= link_to "#{fu.starts_at.strftime('%d/%m/%Y às %H:%M')} — #{fu.status_label}", encounter_path(fu), style: "color: var(--color-accent); font-weight:600;" %>
+      </div>
+    <% end %>
+
+    <div class="flex gap-2 flex-wrap mt-4 pt-4 border-t" style="border-color: var(--color-border);">
+      <% if @appointment.can_confirm? %>
+        <%= button_to "Confirmar", confirm_encounter_path(@appointment), method: :patch, class: "btn btn-primary", form: { data: { turbo_confirm: "Confirmar esta consulta?" } } %>
+      <% end %>
+      <% if @appointment.can_start? %>
+        <%= button_to "Iniciar atendimento", start_encounter_path(@appointment), method: :patch, class: "btn btn-primary", form: { data: { turbo_confirm: "Iniciar o atendimento agora?" } } %>
+      <% end %>
+      <% if @appointment.can_finish? %>
+        <%= button_to "Finalizar atendimento", finish_encounter_path(@appointment), method: :patch, class: "btn btn-primary", form: { data: { turbo_confirm: "Finalizar este atendimento? O prontuário será travado para edição." } } %>
+      <% end %>
+      <% if @appointment.can_reopen? %>
+        <%= button_to "Reabrir atendimento", reopen_encounter_path(@appointment), method: :patch, class: "btn", form: { data: { turbo_confirm: "Reabrir este atendimento para edição?" } } %>
+      <% end %>
+      <% if @appointment.can_schedule_follow_up? %>
+        <%= button_to "Agendar retorno em 7 dias", schedule_follow_up_encounter_path(@appointment), method: :post, class: "btn" %>
+      <% end %>
+      <% if @appointment.encounter %>
+        <%= link_to "Imprimir prontuário (PDF)", print_encounter_path(@appointment), target: "_blank", class: "btn" %>
+      <% end %>
+      <% if @appointment.can_mark_no_show? %>
+        <%= button_to "Marcar falta", no_show_encounter_path(@appointment), method: :patch, class: "btn btn-ghost", form: { data: { turbo_confirm: "Confirmar falta do paciente?" } } %>
+      <% end %>
+      <% if @appointment.can_cancel? %>
+        <%= button_to "Cancelar consulta", cancel_encounter_path(@appointment), method: :patch, class: "btn btn-ghost btn-danger", form: { data: { turbo_confirm: "Cancelar esta consulta?" } } %>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @appointment.status == "faltou" %>
+    <div class="card p-4 mb-3.5">
+      <div class="flex items-center gap-2.5 px-4 py-3.5 rounded-[10px] text-sm font-medium chip-faltou">
+        Paciente não compareceu ao horário agendado (<%= @appointment.starts_at.strftime("%H:%M") %>).
+      </div>
+    </div>
+  <% elsif @appointment.status == "cancelado" %>
+    <div class="card p-4 mb-3.5">
+      <div class="px-4 py-3.5 rounded-[10px] text-sm font-medium" style="background: var(--color-surface-2); color: var(--color-text-muted);">
+        Esta consulta foi cancelada.
+      </div>
+    </div>
+  <% elsif !@appointment.started? %>
+    <div class="card p-8 text-center text-sm mb-3.5" style="color: var(--color-text-muted);">
+      Atendimento ainda não iniciado — o prontuário abre para edição quando o paciente for chamado (previsto <%= @appointment.starts_at.strftime("%H:%M") %>).
+    </div>
+  <% end %>
+
+  <% if @appointment.encounter %>
+    <% encounter = @appointment.encounter %>
+    <% locked = @appointment.status == "concluido" %>
+
+    <%= form_with model: encounter, url: encounter_path(@appointment, **filter_params), method: :patch, class: "mb-3.5" do |f| %>
+      <div class="card p-4 mb-3.5">
+        <span class="font-mono text-[0.6875rem] uppercase tracking-wide mb-2 block" style="color: var(--color-accent);">Queixa principal</span>
+        <%= f.text_field :chief_complaint, class: "field-input", disabled: locked, placeholder: "O que trouxe o paciente à consulta" %>
+      </div>
+
+      <div class="card p-4 mb-3.5">
+        <span class="font-mono text-[0.6875rem] uppercase tracking-wide mb-2 block" style="color: var(--color-accent);">Sinais vitais</span>
+        <div class="vitals-grid">
+          <div class="field"><div class="f-label">PA (mmHg)</div><%= f.text_field :blood_pressure, class: "field-input", disabled: locked, placeholder: "120x80" %></div>
+          <div class="field"><div class="f-label">FC (bpm)</div><%= f.number_field :heart_rate, class: "field-input", disabled: locked %></div>
+          <div class="field"><div class="f-label">Temp (°C)</div><%= f.text_field :temperature, class: "field-input", disabled: locked, placeholder: "36.5" %></div>
+          <div class="field"><div class="f-label">Peso (kg)</div><%= f.text_field :weight_kg, class: "field-input", disabled: locked %></div>
+          <div class="field"><div class="f-label">Altura (cm)</div><%= f.text_field :height_cm, class: "field-input", disabled: locked %></div>
+        </div>
+      </div>
+
+      <div class="card p-4 mb-3.5">
+        <span class="font-mono text-[0.6875rem] uppercase tracking-wide mb-2 block" style="color: var(--color-accent);">Subjetivo</span>
+        <%= f.text_area :subjective, class: "field-input", style: "min-height:64px; resize:vertical;", disabled: locked %>
+      </div>
+      <div class="card p-4 mb-3.5">
+        <span class="font-mono text-[0.6875rem] uppercase tracking-wide mb-2 block" style="color: var(--color-accent);">Objetivo</span>
+        <%= f.text_area :objective, class: "field-input", style: "min-height:64px; resize:vertical;", disabled: locked %>
+      </div>
+      <div class="card p-4 mb-3.5">
+        <span class="font-mono text-[0.6875rem] uppercase tracking-wide mb-2 block" style="color: var(--color-accent);">Avaliação</span>
+        <%= f.text_area :assessment, class: "field-input", style: "min-height:64px; resize:vertical;", disabled: locked %>
+      </div>
+      <div class="card p-4 mb-3.5">
+        <span class="font-mono text-[0.6875rem] uppercase tracking-wide mb-2 block" style="color: var(--color-accent);">Diagnóstico</span>
+        <%= f.text_field :diagnosis, class: "field-input", disabled: locked, placeholder: "Ex: Cefaleia tensional (CID R51)" %>
+      </div>
+      <div class="card p-4 mb-3.5">
+        <span class="font-mono text-[0.6875rem] uppercase tracking-wide mb-2 block" style="color: var(--color-accent);">Plano</span>
+        <%= f.text_area :plan, class: "field-input", style: "min-height:64px; resize:vertical;", disabled: locked %>
+      </div>
+
+      <div class="card p-4 mb-3.5" data-controller="dynamic-fields">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="font-mono text-[0.6875rem] uppercase tracking-wide block" style="color: var(--color-purple);">Campos personalizados</span>
+          <% unless locked %>
+            <button type="button" class="btn" style="padding:5px 10px; font-size:0.75rem;" data-action="dynamic-fields#add">+ Adicionar campo</button>
+          <% end %>
+        </div>
+
+        <p class="text-xs mb-2.5 <%= "hidden" if encounter.custom_fields_list.any? %>" style="color: var(--color-text-muted);" data-dynamic-fields-target="empty">Nenhum campo personalizado neste atendimento.</p>
+
+        <div data-dynamic-fields-target="list" class="flex flex-col gap-2.5">
+          <% encounter.custom_fields_list.each_with_index do |field, i| %>
+            <div class="flex gap-2 items-end" data-dynamic-fields-target="row">
+              <div class="field" style="flex:1;">
+                <div class="f-label">Nome do campo</div>
+                <input type="text" name="encounter[custom_fields][<%= i %>][label]" value="<%= field["label"] %>" class="field-input" placeholder="Ex: Retorno indicado" <%= "disabled" if locked %>>
+              </div>
+              <div class="field" style="flex:1.4;">
+                <div class="f-label">Valor</div>
+                <input type="text" name="encounter[custom_fields][<%= i %>][value]" value="<%= field["value"] %>" class="field-input" <%= "disabled" if locked %>>
+              </div>
+              <% unless locked %>
+                <button type="button" class="btn btn-ghost btn-danger" style="padding:7px 10px;" data-action="dynamic-fields#remove">Remover</button>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
+        <% unless locked %>
+          <template data-dynamic-fields-target="template">
+            <div class="flex gap-2 items-end mt-2.5" data-dynamic-fields-target="row">
+              <div class="field" style="flex:1;">
+                <div class="f-label">Nome do campo</div>
+                <input type="text" name="encounter[custom_fields][__INDEX__][label]" class="field-input" placeholder="Ex: Retorno indicado">
+              </div>
+              <div class="field" style="flex:1.4;">
+                <div class="f-label">Valor</div>
+                <input type="text" name="encounter[custom_fields][__INDEX__][value]" class="field-input">
+              </div>
+              <button type="button" class="btn btn-ghost btn-danger" style="padding:7px 10px;" data-action="dynamic-fields#remove">Remover</button>
+            </div>
+          </template>
+        <% end %>
+      </div>
+
+      <% unless locked %>
+        <%= f.submit "Salvar prontuário", class: "btn btn-primary" %>
+      <% end %>
+    <% end %>
+
+    <div class="card p-4 mb-3.5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-semibold">Receitas</h2>
+        <span class="font-mono text-xs" style="color: var(--color-text-muted);"><%= pluralize(encounter.prescriptions.size, "receita") %></span>
+      </div>
+
+      <% encounter.prescriptions.order(issued_at: :desc).each do |rx| %>
+        <div class="mb-4 pb-4 border-b" style="border-color: var(--color-border);">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold">Emitida em <%= rx.issued_at.strftime("%d/%m/%Y %H:%M") %></span>
+            <%= link_to "Imprimir (PDF)", print_prescription_path(rx), target: "_blank", class: "btn", style: "padding:5px 10px; font-size:0.75rem;" %>
+          </div>
+          <ul class="text-sm flex flex-col gap-1">
+            <% rx.prescription_items.each do |item| %>
+              <li>
+                <strong><%= item.medication_name %></strong> — <%= item.dosage %><%= item.frequency.present? ? ", #{item.frequency}" : "" %><%= item.duration.present? ? " por #{item.duration}" : "" %>
+                <% if item.instructions.present? %><span style="color: var(--color-text-muted);"> · <%= item.instructions %></span><% end %>
+              </li>
+            <% end %>
+          </ul>
+          <% if rx.notes.present? %><p class="text-xs mt-2" style="color: var(--color-text-muted);"><%= rx.notes %></p><% end %>
+        </div>
+      <% end %>
+
+      <% unless locked %>
+        <details <%= "open" unless encounter.prescriptions.any? %>>
+          <summary class="text-sm font-semibold cursor-pointer" style="color: var(--color-accent);">Emitir nova receita</summary>
+          <%= form_with model: Prescription.new, url: prescriptions_path(@appointment), method: :post, class: "mt-3" do |f| %>
+            <% 3.times do %>
+              <div class="rx-item-row">
+                <%= f.fields_for :prescription_items, PrescriptionItem.new do |i| %>
+                  <div class="field">
+                    <div class="f-label">Medicamento</div>
+                    <%= i.text_field :medication_name, class: "field-input" %>
+                  </div>
+                  <div class="field">
+                    <div class="f-label">Dosagem</div>
+                    <%= i.text_field :dosage, class: "field-input", placeholder: "Ex: 500mg" %>
+                  </div>
+                  <div class="field">
+                    <div class="f-label">Frequência</div>
+                    <%= i.text_field :frequency, class: "field-input", placeholder: "Ex: 8/8h" %>
+                  </div>
+                  <div class="field">
+                    <div class="f-label">Duração</div>
+                    <%= i.text_field :duration, class: "field-input", placeholder: "Ex: 7 dias" %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+            <div class="mt-3">
+              <label class="text-xs uppercase tracking-wide" style="color: var(--color-text-muted);">Observações gerais</label>
+              <%= f.text_area :notes, class: "field-input mt-1", style: "min-height:48px;" %>
+            </div>
+            <%= f.submit "Emitir receita", class: "btn btn-primary mt-3" %>
+          <% end %>
+        </details>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @appointment.permissions_manageable_by?(current_user) %>
+    <div class="card p-4 mb-3.5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-semibold">Permissões de acesso</h2>
+        <span class="font-mono text-xs" style="color: var(--color-text-muted);"><%= pluralize(@appointment.appointment_permissions.size, "pessoa liberada") %></span>
+      </div>
+
+      <% if @appointment.appointment_permissions.any? %>
+        <ul class="flex flex-col gap-2 mb-3.5">
+          <% @appointment.appointment_permissions.includes(:user, :granted_by).each do |grant| %>
+            <li class="flex items-center justify-between text-sm py-1.5 border-b" style="border-color: var(--color-border);">
+              <div>
+                <span class="font-semibold"><%= grant.user.name %></span>
+                <span style="color: var(--color-text-muted);"> · <%= grant.user.display_role %> · liberado por <%= grant.granted_by.name %></span>
+              </div>
+              <%= button_to "Remover", appointment_permission_path(@appointment, grant), method: :delete, class: "btn btn-ghost btn-danger", style: "padding:4px 10px; font-size:0.75rem;", form: { data: { turbo_confirm: "Remover o acesso de #{grant.user.name}?" } } %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm mb-3.5" style="color: var(--color-text-muted);">Só o profissional responsável (e admin/secretaria) têm acesso a esta consulta.</p>
+      <% end %>
+
+      <% granted_ids = @appointment.permitted_users.pluck(:id) %>
+      <% excluded_ids = ([@appointment.professional.user&.id] + granted_ids).compact %>
+      <% eligible = current_user.organization.users.where(role: %w[medico secretaria]).where.not(id: excluded_ids).order(:name) %>
+      <% if eligible.any? %>
+        <%= form_with url: appointment_permissions_path(@appointment), method: :post, class: "flex gap-2 items-end flex-wrap" do %>
+          <div class="field" style="min-width:220px;">
+            <div class="f-label">Liberar acesso pra</div>
+            <select name="user_id" class="field-select">
+              <% eligible.each do |u| %>
+                <option value="<%= u.id %>"><%= u.name %> — <%= u.display_role %></option>
+              <% end %>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Adicionar</button>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= render "shared/audit_trail", audits: @appointment.own_and_associated_audits %>
+<% end %>

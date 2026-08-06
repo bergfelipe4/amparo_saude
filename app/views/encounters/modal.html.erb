@@ -1,0 +1,22 @@
+<%= turbo_frame_tag "modal" do %>
+  <div class="modal-backdrop" data-controller="modal" data-appointment-id="<%= @appointment.id %>" data-action="click->modal#backdropClick keydown@window->modal#escape">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-label="Atendimento">
+      <div class="modal-dialog-header">
+        <div>
+          <h2 class="text-base font-semibold leading-tight"><%= @appointment.patient.name %></h2>
+          <span class="text-xs" style="color: var(--color-text-muted);"><%= @appointment.starts_at.strftime("%d/%m/%Y · %H:%M") %> · <%= @appointment.professional.short_name %></span>
+        </div>
+        <button type="button" class="modal-close" data-action="modal#close" aria-label="Fechar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-dialog-body">
+        <% if notice %><div class="mb-3.5 px-4 py-2.5 rounded-lg text-sm chip-confirmado"><%= notice %></div><% end %>
+        <% if alert %><div class="mb-3.5 px-4 py-2.5 rounded-lg text-sm chip-faltou"><%= alert %></div><% end %>
+
+        <%= render "panel" %>
+      </div>
+    </div>
+  </div>
+<% end %>

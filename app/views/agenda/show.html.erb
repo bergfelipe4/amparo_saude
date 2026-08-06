@@ -1,0 +1,101 @@
+<% content_for :title, "Agenda" %>
+<% content_for :subtitle, "#{l(@date, format: :long)} · Unidade #{@unit.name}" %>
+
+<div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+  <div class="flex items-center gap-2 flex-wrap">
+    <%= link_to agenda_path(date: @date.prev_day.iso8601, professional_ids: @selected_professional_ids), class: "btn btn-ghost", style: "padding:8px 10px;", "aria-label": "Dia anterior" do %>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <% end %>
+
+    <%= form_with url: agenda_path, method: :get, class: "inline-flex" do %>
+      <% @selected_professional_ids.each do |id| %><%= hidden_field_tag "professional_ids[]", id %><% end %>
+      <input type="date" name="date" value="<%= @date.iso8601 %>" onchange="this.form.submit()" class="field-input" style="width:auto;">
+    <% end %>
+
+    <%= link_to agenda_path(date: @date.next_day.iso8601, professional_ids: @selected_professional_ids), class: "btn btn-ghost", style: "padding:8px 10px;", "aria-label": "Próximo dia" do %>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    <% end %>
+
+    <% unless @date == Date.current %>
+      <%= link_to "Hoje", agenda_path(professional_ids: @selected_professional_ids), class: "btn" %>
+    <% end %>
+
+    <details class="relative">
+      <summary class="btn" style="cursor:pointer;">Médicos (<%= @professionals.size %>/<%= @all_professionals.size %>)</summary>
+      <div class="card p-3 absolute mt-2" style="min-width:220px; z-index:20;">
+        <%= form_with url: agenda_path, method: :get, class: "flex flex-col gap-2" do %>
+          <%= hidden_field_tag :date, @date.iso8601 %>
+          <% @all_professionals.each do |p| %>
+            <label class="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="professional_ids[]" value="<%= p.id %>" <%= "checked" if @selected_professional_ids.include?(p.id) %>>
+              <%= p.name %>
+            </label>
+          <% end %>
+          <button type="submit" class="btn btn-primary mt-1" style="padding:6px 10px; font-size:0.75rem;">Aplicar</button>
+        <% end %>
+      </div>
+    </details>
+  </div>
+
+  <div class="flex gap-3.5 flex-wrap">
+    <% Appointment::STATUSES.each do |s| %>
+      <span class="chip chip-<%= s %>"><%= Appointment::STATUS_LABELS[s] %></span>
+    <% end %>
+  </div>
+</div>
+
+<% if @professionals.empty? %>
+  <div class="card p-8 text-center text-sm" style="color: var(--color-text-muted);">Selecione ao menos um médico pra visualizar a agenda.</div>
+<% else %>
+  <div
+    class="card overflow-x-auto"
+    data-controller="agenda-drag"
+    data-agenda-drag-move-url-template-value="<%= move_agenda_appointment_path(':id') %>"
+    data-agenda-drag-date-value="<%= @date.iso8601 %>"
+    data-agenda-drag-day-start-value="<%= AgendaController::DAY_START_MIN %>"
+    data-agenda-drag-row-min-value="<%= AgendaController::ROW_MIN %>"
+    data-agenda-drag-row-height-value="<%= AgendaController::ROW_HEIGHT_PX %>"
+    data-agenda-drag-snap-min-value="<%= AgendaController::SNAP_MIN %>"
+  >
+    <div class="grid" style="grid-template-columns: 60px repeat(<%= @professionals.size %>, minmax(168px, 1fr)); min-width: 800px;">
+      <div class="border-b sticky top-0" style="border-color: var(--color-border); background: var(--color-surface);"></div>
+      <% @professionals.each do |p| %>
+        <div class="px-3 py-3 border-b border-l sticky top-0" style="border-color: var(--color-border); background: var(--color-surface);">
+          <div class="font-semibold text-[0.8125rem]"><%= p.name %></div>
+          <div class="text-[0.6875rem]" style="color: var(--color-text-muted);"><%= p.specialty %></div>
+        </div>
+      <% end %>
+
+      <div class="time-grid-col" style="height: <%= @rows * AgendaController::ROW_HEIGHT_PX %>px;">
+        <% (0...@rows).each do |i| %>
+          <% minutes = AgendaController::DAY_START_MIN + i * 30 %>
+          <div class="h-12 font-mono text-[0.6875rem] text-right pr-2 -translate-y-1.5" style="color: var(--color-text-muted); <%= 'opacity: .55; font-size: .625rem;' if minutes % 60 != 0 %>">
+            <%= minutes % 60 == 0 ? format("%02d:00", minutes / 60) : "" %>
+          </div>
+        <% end %>
+      </div>
+
+      <% @professionals.each do |p| %>
+        <div class="relative border-l time-grid-col" data-agenda-drag-target="column" data-professional-id="<%= p.id %>" style="border-color: var(--color-border); height: <%= @rows * AgendaController::ROW_HEIGHT_PX %>px;">
+          <% @appointments.select { |a| a.professional_id == p.id }.each do |a| %>
+            <% movable = current_user.full_access? && AgendaController::MOVABLE_STATUSES.include?(a.status) %>
+            <% wrapper_data = movable ? { agenda_drag_target: "block", id: a.id, duration_min: ((a.ends_at - a.starts_at) / 60).to_i } : {} %>
+            <%= content_tag :div, id: "appointment_#{a.id}", class: "appt-block-wrap", draggable: movable, data: wrapper_data,
+                  style: "top:#{slot_top(a.starts_at)}px; height:#{slot_height(a.starts_at, a.ends_at)}px;" do %>
+              <%= link_to encounter_path(a), class: "appt-block st-#{a.status} #{'is-movable' if movable}", data: { turbo_frame: "modal" } do %>
+                <span class="block font-semibold text-xs truncate"><%= a.patient.name %><%= a.patient.age && a.patient.age < 18 ? " (#{a.patient.age}a)" : "" %></span>
+                <span class="block text-[0.6875rem] opacity-85"><%= a.appointment_type %></span>
+              <% end %>
+              <% if current_user.full_access? %>
+                <%= render "agenda/kebab_menu", appointment: a %>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <% if current_user.full_access? %>
+    <p class="text-xs mt-2.5" style="color: var(--color-text-muted);">Arraste uma consulta aguardando ou confirmada pra remarcar horário ou trocar de médico.</p>
+  <% end %>
+<% end %>

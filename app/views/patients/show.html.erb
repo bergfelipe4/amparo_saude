@@ -1,0 +1,211 @@
+<% content_for :title, "Pacientes" %>
+<% content_for :subtitle, "#{pluralize(@patients.size, 'paciente cadastrado', plural: 'pacientes cadastrados')} · Unidade #{current_user.unit&.name || current_user.organization.name}" %>
+
+<div class="grid gap-4 grid-cols-1 lg:grid-cols-[300px_1fr]">
+  <div class="flex flex-col gap-2.5 col-span-full">
+    <%= link_to "+ Novo paciente", new_patient_path, class: "btn btn-primary", style: "align-self: flex-start;" %>
+  </div>
+  <div class="card p-2 overflow-y-auto max-h-[50vh] lg:max-h-[74vh]">
+    <% @patients.each do |p| %>
+      <%= link_to patient_path(p), class: "w-full text-left flex gap-2.5 items-center p-2.5 rounded-lg #{'is-active' if @patient == p}", style: (@patient == p ? "background: var(--color-accent-soft);" : "") do %>
+        <div class="avatar" style="<%= 'background: var(--color-accent); color: var(--color-accent-contrast); border-color: transparent;' if @patient == p %>"><%= p.initials %></div>
+        <div class="min-w-0 flex-1">
+          <div class="font-semibold text-[0.8438rem] truncate"><%= p.name %></div>
+          <div class="text-[0.6875rem]" style="color: var(--color-text-muted);"><%= p.convenio %></div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if @patient %>
+    <div class="card p-6 mb-3.5">
+      <div class="flex justify-between items-start mb-5 flex-wrap gap-3">
+        <div>
+          <h2 class="text-[1.375rem] font-semibold"><%= @patient.name %></h2>
+          <div class="flex gap-2.5 flex-wrap mt-1 text-[0.8125rem]" style="color: var(--color-text-muted);">
+            <span><%= @patient.age %> anos</span>
+            <% if @patient.sex.present? %><span>·</span><span><%= @patient.sex %></span><% end %>
+            <span>·</span><span><%= @patient.convenio %></span>
+            <% if @patient.allergy.present? %>
+              <span class="chip chip-faltou">Alergia: <%= @patient.allergy %></span>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-list">
+        <div class="info-row">
+          <div class="info-label">CPF</div>
+          <div class="info-value font-mono"><%= @patient.cpf.presence || "—" %></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Nascimento</div>
+          <div class="info-value font-mono"><%= @patient.birth_date&.strftime("%d/%m/%Y") || "—" %></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Sexo</div>
+          <div class="info-value"><%= @patient.sex.presence || "—" %></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Telefone</div>
+          <div class="info-value font-mono"><%= @patient.phone.presence || "—" %></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">E-mail</div>
+          <div class="info-value"><%= @patient.email.presence || "—" %></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Carteirinha</div>
+          <div class="info-value font-mono"><%= @patient.carteirinha.presence || "—" %></div>
+        </div>
+        <div class="info-row sm:col-span-2">
+          <div class="info-label">Endereço</div>
+          <div class="info-value"><%= @patient.address.presence || "—" %></div>
+        </div>
+        <% if @patient.guardian_name.present? %>
+          <div class="info-row sm:col-span-2">
+            <div class="info-label">Responsável</div>
+            <div class="info-value"><%= @patient.guardian_name %></div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="info-section-label">Ficha do paciente</div>
+      <% if @patient.chart_present? %>
+        <div class="info-list mb-2">
+          <div class="info-row">
+            <div class="info-label">Tipo sanguíneo</div>
+            <div class="info-value"><%= @patient.blood_type.presence || "—" %></div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Contato de emergência</div>
+            <div class="info-value"><%= [@patient.emergency_contact_name, @patient.emergency_contact_phone].compact_blank.join(" · ").presence || "—" %></div>
+          </div>
+          <div class="info-row sm:col-span-2">
+            <div class="info-label">Condições crônicas</div>
+            <div class="info-value" style="font-weight:500;"><%= @patient.chronic_conditions.presence || "—" %></div>
+          </div>
+          <div class="info-row sm:col-span-2">
+            <div class="info-label">Medicações em uso contínuo</div>
+            <div class="info-value" style="font-weight:500;"><%= @patient.current_medications.presence || "—" %></div>
+          </div>
+          <div class="info-row sm:col-span-2">
+            <div class="info-label">Histórico familiar</div>
+            <div class="info-value" style="font-weight:500;"><%= @patient.family_history.presence || "—" %></div>
+          </div>
+          <% @patient.custom_fields_list.each do |field| %>
+            <div class="info-row">
+              <div class="info-label"><%= field["label"].presence || "Campo personalizado" %></div>
+              <div class="info-value"><%= field["value"].presence || "—" %></div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-sm py-2 mb-2" style="color: var(--color-text-muted);">Ficha ainda não preenchida.</p>
+      <% end %>
+
+      <details>
+        <summary class="text-sm font-semibold cursor-pointer" style="color: var(--color-purple);"><%= @patient.chart_present? ? "Editar ficha" : "Preencher ficha" %></summary>
+        <%= form_with model: @patient, url: patient_path(@patient), method: :patch, class: "mt-4 flex flex-col gap-4" do |f| %>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="field">
+              <div class="f-label text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Tipo sanguíneo</div>
+              <%= f.text_field :blood_type, class: "field-input", placeholder: "Ex: O+" %>
+            </div>
+            <div class="field">
+              <div class="f-label text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Contato de emergência</div>
+              <%= f.text_field :emergency_contact_name, class: "field-input", placeholder: "Nome" %>
+            </div>
+            <div class="field">
+              <div class="f-label text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Telefone de emergência</div>
+              <%= f.text_field :emergency_contact_phone, class: "field-input" %>
+            </div>
+          </div>
+          <div>
+            <div class="text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Condições crônicas</div>
+            <%= f.text_area :chronic_conditions, class: "field-input", style: "min-height:48px;" %>
+          </div>
+          <div>
+            <div class="text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Medicações em uso contínuo</div>
+            <%= f.text_area :current_medications, class: "field-input", style: "min-height:48px;" %>
+          </div>
+          <div>
+            <div class="text-[0.6875rem] uppercase tracking-wide mb-1" style="color: var(--color-text-muted);">Histórico familiar</div>
+            <%= f.text_area :family_history, class: "field-input", style: "min-height:48px;" %>
+          </div>
+
+          <div data-controller="dynamic-fields">
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-[0.6875rem] uppercase tracking-wide" style="color: var(--color-purple);">Campos personalizados</span>
+              <button type="button" class="btn" style="padding:5px 10px; font-size:0.75rem;" data-action="dynamic-fields#add">+ Adicionar campo</button>
+            </div>
+
+            <p class="text-xs mb-2.5 <%= "hidden" if @patient.custom_fields_list.any? %>" style="color: var(--color-text-muted);" data-dynamic-fields-target="empty">Nenhum campo personalizado ainda.</p>
+
+            <div data-dynamic-fields-target="list" class="flex flex-col gap-2.5">
+              <% @patient.custom_fields_list.each_with_index do |field, i| %>
+                <div class="flex gap-2 items-end" data-dynamic-fields-target="row">
+                  <div class="field" style="flex:1;">
+                    <div class="f-label">Nome do campo</div>
+                    <input type="text" name="patient[custom_fields][<%= i %>][label]" value="<%= field["label"] %>" class="field-input" placeholder="Ex: Plano de saúde secundário">
+                  </div>
+                  <div class="field" style="flex:1.4;">
+                    <div class="f-label">Valor</div>
+                    <input type="text" name="patient[custom_fields][<%= i %>][value]" value="<%= field["value"] %>" class="field-input">
+                  </div>
+                  <button type="button" class="btn btn-ghost btn-danger" style="padding:7px 10px;" data-action="dynamic-fields#remove">Remover</button>
+                </div>
+              <% end %>
+            </div>
+
+            <template data-dynamic-fields-target="template">
+              <div class="flex gap-2 items-end mt-2.5" data-dynamic-fields-target="row">
+                <div class="field" style="flex:1;">
+                  <div class="f-label">Nome do campo</div>
+                  <input type="text" name="patient[custom_fields][__INDEX__][label]" class="field-input" placeholder="Ex: Plano de saúde secundário">
+                </div>
+                <div class="field" style="flex:1.4;">
+                  <div class="f-label">Valor</div>
+                  <input type="text" name="patient[custom_fields][__INDEX__][value]" class="field-input">
+                </div>
+                <button type="button" class="btn btn-ghost btn-danger" style="padding:7px 10px;" data-action="dynamic-fields#remove">Remover</button>
+              </div>
+            </template>
+          </div>
+
+          <div><%= f.submit "Salvar ficha", class: "btn btn-primary" %></div>
+        <% end %>
+      </details>
+    </div>
+
+    <div class="card p-6 mb-3.5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-semibold">Consultas</h2>
+        <span class="font-mono text-xs" style="color: var(--color-text-muted);"><%= pluralize(@appointments.size, "consulta") %></span>
+      </div>
+      <% if @appointments.empty? %>
+        <p class="text-sm py-2" style="color: var(--color-text-muted);">Nenhuma consulta registrada.</p>
+      <% else %>
+        <% @appointments.each do |a| %>
+          <%= link_to encounter_path(a), class: "flex items-center gap-3.5 py-3 border-t", style: "border-color: var(--color-border); color: inherit;" do %>
+            <time class="font-mono text-xs w-[110px] flex-shrink-0" style="color: var(--color-text-muted);"><%= a.starts_at.strftime("%d/%m/%y %H:%M") %></time>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-sm">
+                <%= a.appointment_type %><% if a.encounter&.diagnosis.present? %> — <%= a.encounter.diagnosis %><% end %>
+              </div>
+              <div class="text-xs mt-0.5" style="color: var(--color-text-muted);">
+                <%= a.professional.name %> · <%= a.unit.name %>
+                <% if a.follow_up_of %> · retorno<% end %>
+              </div>
+            </div>
+            <span class="chip chip-<%= a.status %>"><%= a.status_label %></span>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="card p-6">
+      <%= render "shared/audit_trail", audits: @audits %>
+    </div>
+  <% end %>
+</div>

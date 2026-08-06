@@ -1,0 +1,121 @@
+<% content_for :title, "Novo atendimento" %>
+<% content_for :subtitle, "Unidade #{@unit.name}" %>
+
+<div class="max-w-xl">
+  <% if @appointment.errors.any? || @new_patient.errors.any? %>
+    <div class="mb-4 px-4 py-2.5 rounded-lg text-sm chip-faltou">
+      <% (@appointment.errors.full_messages + @new_patient.errors.full_messages).each do |msg| %>
+        <div><%= msg %></div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= form_with url: appointments_path, method: :post, data: { controller: "patient-mode" } do |f| %>
+    <div class="card p-4 mb-3.5">
+      <span class="font-mono text-[0.6875rem] uppercase tracking-wide mb-3 block" style="color: var(--color-accent);">Paciente</span>
+
+      <div class="flex gap-2 mb-3.5 flex-wrap">
+        <label class="btn" style="cursor:pointer; <%= 'border-color: var(--color-accent); color: var(--color-accent);' if @patient_mode != 'new' %>">
+          <input type="radio" name="patient_mode" value="existing" data-action="patient-mode#toggle" <%= "checked" if @patient_mode != "new" %> style="margin-right:6px;">
+          Paciente já cadastrado
+        </label>
+        <label class="btn" style="cursor:pointer; <%= 'border-color: var(--color-accent); color: var(--color-accent);' if @patient_mode == 'new' %>">
+          <input type="radio" name="patient_mode" value="new" data-action="patient-mode#toggle" <%= "checked" if @patient_mode == "new" %> style="margin-right:6px;">
+          Cadastrar novo paciente
+        </label>
+      </div>
+
+      <div data-patient-mode-target="existingFields" class="<%= "hidden" if @patient_mode == "new" %>">
+        <div class="field">
+          <div class="f-label">Selecione o paciente</div>
+          <select name="patient_id" class="field-select">
+            <option value="">Selecione…</option>
+            <% @patients.each do |p| %>
+              <option value="<%= p.id %>" <%= "selected" if params[:patient_id].to_i == p.id %>><%= p.name %> · <%= p.convenio %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+
+      <div data-patient-mode-target="newFields" class="<%= "hidden" unless @patient_mode == "new" %>">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div class="field">
+            <div class="f-label">Nome completo</div>
+            <%= text_field_tag "patient[name]", @new_patient.name, class: "field-input" %>
+          </div>
+          <div class="field">
+            <div class="f-label">CPF</div>
+            <%= text_field_tag "patient[cpf]", @new_patient.cpf, class: "field-input", placeholder: "000.000.000-00" %>
+          </div>
+          <div class="field">
+            <div class="f-label">Nascimento</div>
+            <%= date_field_tag "patient[birth_date]", @new_patient.birth_date, class: "field-input" %>
+          </div>
+          <div class="field">
+            <div class="f-label">Sexo</div>
+            <%= select_tag "patient[sex]", options_for_select([["Selecione…", ""]] + Patient::SEX_OPTIONS, @new_patient.sex), class: "field-select" %>
+          </div>
+          <div class="field">
+            <div class="f-label">Telefone</div>
+            <%= text_field_tag "patient[phone]", @new_patient.phone, class: "field-input" %>
+          </div>
+          <div class="field">
+            <div class="f-label">Convênio</div>
+            <%= text_field_tag "patient[convenio]", @new_patient.convenio, class: "field-input", placeholder: "Ex: Unimed, Particular" %>
+          </div>
+          <div class="field">
+            <div class="f-label">Carteirinha</div>
+            <%= text_field_tag "patient[carteirinha]", @new_patient.carteirinha, class: "field-input" %>
+          </div>
+          <div class="field">
+            <div class="f-label">Responsável (se menor de idade)</div>
+            <%= text_field_tag "patient[guardian_name]", @new_patient.guardian_name, class: "field-input" %>
+          </div>
+          <div class="field">
+            <div class="f-label">Alergias</div>
+            <%= text_field_tag "patient[allergy]", @new_patient.allergy, class: "field-input" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-4 mb-3.5">
+      <span class="font-mono text-[0.6875rem] uppercase tracking-wide mb-3 block" style="color: var(--color-accent);">Consulta</span>
+      <div class="grid grid-cols-2 gap-3.5">
+        <div class="field">
+          <div class="f-label">Profissional</div>
+          <select name="professional_id" class="field-select">
+            <% @professionals.each do |p| %>
+              <option value="<%= p.id %>" <%= "selected" if params[:professional_id].to_i == p.id %>><%= p.name %> · <%= p.specialty %></option>
+            <% end %>
+          </select>
+        </div>
+        <div class="field">
+          <div class="f-label">Tipo</div>
+          <select name="appointment_type" class="field-select">
+            <% Appointment::TYPES.each do |t| %>
+              <option value="<%= t %>" <%= "selected" if @appointment.appointment_type == t %>><%= t %></option>
+            <% end %>
+          </select>
+        </div>
+        <div class="field">
+          <div class="f-label">Data e horário</div>
+          <%= datetime_field_tag "starts_at", @appointment.starts_at&.strftime("%Y-%m-%dT%H:%M"), class: "field-input" %>
+        </div>
+        <div class="field">
+          <div class="f-label">Duração</div>
+          <select name="duration" class="field-select">
+            <% AppointmentsController::DURATIONS.each do |d| %>
+              <option value="<%= d %>" <%= "selected" if @duration == d %>><%= d %> minutos</option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-2.5">
+      <%= f.submit "Agendar consulta", class: "btn btn-primary" %>
+      <%= link_to "Cancelar", encounters_path, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+</div>

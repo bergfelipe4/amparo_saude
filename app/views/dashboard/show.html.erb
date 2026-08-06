@@ -1,0 +1,62 @@
+<% content_for :title, "Painel" %>
+<% content_for :subtitle, "#{l(Date.current, format: :long)} · Unidade #{@unit.name}" %>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
+  <div class="card p-4">
+    <div class="font-mono text-[0.6875rem] uppercase tracking-wide" style="color: var(--color-text-muted);">Consultas hoje</div>
+    <div class="text-[2.1rem] font-bold mt-1.5 leading-none tabular-nums" style="font-family: var(--font-display);"><%= @count_today %></div>
+  </div>
+  <div class="card p-4">
+    <div class="font-mono text-[0.6875rem] uppercase tracking-wide" style="color: var(--color-text-muted);">Confirmadas</div>
+    <div class="text-[2.1rem] font-bold mt-1.5 leading-none tabular-nums" style="font-family: var(--font-display);"><%= @count_confirmadas %></div>
+    <div class="text-xs mt-2" style="color: var(--color-text-muted);"><%= @count_today.positive? ? (@count_confirmadas * 100 / @count_today) : 0 %>% dos agendamentos</div>
+  </div>
+  <div class="card p-4">
+    <div class="font-mono text-[0.6875rem] uppercase tracking-wide" style="color: var(--color-text-muted);">Aguardando confirmação</div>
+    <div class="text-[2.1rem] font-bold mt-1.5 leading-none tabular-nums" style="font-family: var(--font-display);"><%= @count_aguardando %></div>
+  </div>
+  <div class="card p-4">
+    <div class="font-mono text-[0.6875rem] uppercase tracking-wide" style="color: var(--color-text-muted);">Faltas no mês</div>
+    <div class="text-[2.1rem] font-bold mt-1.5 leading-none tabular-nums" style="font-family: var(--font-display);"><%= number_with_delimiter(@pct_faltas) %>%</div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
+  <div class="card p-5">
+    <div class="flex items-baseline justify-between mb-3">
+      <h2 class="text-base font-semibold">Próximos atendimentos</h2>
+      <span class="font-mono text-xs" style="color: var(--color-text-muted);"><%= @unit.name %> · agora</span>
+    </div>
+    <% if @upcoming.any? %>
+      <% @upcoming.each do |a| %>
+        <div class="flex items-center gap-3 py-2.5 border-b last:border-0" style="border-color: var(--color-border);">
+          <time class="font-mono text-sm w-11 flex-shrink-0" style="color: var(--color-text-muted);"><%= a.starts_at.strftime("%H:%M") %></time>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-sm truncate"><%= a.patient.name %></div>
+            <div class="text-xs" style="color: var(--color-text-muted);"><%= a.professional.name %> · <%= a.appointment_type %></div>
+          </div>
+          <span class="chip chip-<%= a.status %>"><%= a.status_label %></span>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="text-sm py-4 text-center" style="color: var(--color-text-muted);">Nenhum atendimento pendente hoje.</p>
+    <% end %>
+  </div>
+
+  <div class="card p-5">
+    <h2 class="text-base font-semibold mb-3">Ocupação por unidade</h2>
+    <div class="flex flex-col gap-3">
+      <% @occupancy.each do |o| %>
+        <div>
+          <div class="flex justify-between text-xs mb-1.5">
+            <span><%= o[:unit].name %></span>
+            <span class="font-mono font-semibold tabular-nums"><%= o[:pct] %>%</span>
+          </div>
+          <div class="h-1.5 rounded-full overflow-hidden" style="background: var(--color-surface-2);">
+            <div class="h-full rounded-full" style="width: <%= o[:pct] %>%; background: var(--color-accent);"></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

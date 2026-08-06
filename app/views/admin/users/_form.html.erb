@@ -1,0 +1,48 @@
+<%= form_with model: [:admin, user], class: "card p-5 flex flex-col gap-4 max-w-xl", data: { controller: "role-toggle" } do |f| %>
+  <div class="field">
+    <div class="f-label">Nome</div>
+    <%= f.text_field :name, class: "field-input", required: true %>
+  </div>
+
+  <div class="field">
+    <div class="f-label">E-mail</div>
+    <%= f.email_field :email, class: "field-input", required: true %>
+  </div>
+
+  <div class="field">
+    <div class="f-label">Senha<%= " (deixe em branco pra manter a atual)" if user.persisted? %></div>
+    <%= f.password_field :password, class: "field-input", autocomplete: "new-password", required: !user.persisted? %>
+  </div>
+
+  <div class="field">
+    <div class="f-label">Perfil</div>
+    <%= f.select :role, [["Médico(a)", "medico"], ["Secretária", "secretaria"]], {}, class: "field-select", data: { action: "change->role-toggle#toggle" } %>
+  </div>
+
+  <div class="field">
+    <div class="f-label">Unidade</div>
+    <%= f.select :unit_id, units.map { |u| [u.name, u.id] }, { include_blank: "Todas" }, class: "field-select" %>
+  </div>
+
+  <div data-role-toggle-target="medicoFields" class="flex flex-col gap-4 <%= 'hidden' unless user.medico? %>">
+    <div class="field">
+      <div class="f-label">Profissional vinculado</div>
+      <%= f.select :professional_id, professionals.map { |p| [p.name, p.id] }, { include_blank: "Selecione…" }, class: "field-select" %>
+    </div>
+
+    <div class="field">
+      <div class="f-label">Assinatura (PNG)</div>
+      <% if user.persisted? && user.signature.attached? %>
+        <div class="mb-2 p-2 rounded-lg" style="background: var(--color-input-bg); display:inline-block;">
+          <%= image_tag user.signature, style: "height:40px; display:block;" %>
+        </div>
+      <% end %>
+      <%= f.file_field :signature, accept: "image/png", class: "field-input" %>
+    </div>
+  </div>
+
+  <div class="flex gap-2 mt-2 pt-3 border-t" style="border-color: var(--color-border);">
+    <%= f.submit user.persisted? ? "Salvar alterações" : "Criar usuário", class: "btn btn-primary" %>
+    <%= link_to "Cancelar", admin_users_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

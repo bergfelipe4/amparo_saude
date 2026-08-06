@@ -1,0 +1,135 @@
+<% content_for :title, "Administração" %>
+<% content_for :subtitle, "Visão geral de #{current_user.organization.name} · todas as unidades" %>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
+  <div class="card p-4">
+    <div class="font-mono text-[0.6875rem] uppercase tracking-wide" style="color: var(--color-text-muted);">Pacientes</div>
+    <div class="text-[2.1rem] font-bold mt-1.5 leading-none tabular-nums" style="font-family: var(--font-display);"><%= @patients_count %></div>
+  </div>
+  <div class="card p-4">
+    <div class="font-mono text-[0.6875rem] uppercase tracking-wide" style="color: var(--color-text-muted);">Profissionais</div>
+    <div class="text-[2.1rem] font-bold mt-1.5 leading-none tabular-nums" style="font-family: var(--font-display);"><%= @professionals.size %></div>
+  </div>
+  <div class="card p-4">
+    <div class="font-mono text-[0.6875rem] uppercase tracking-wide" style="color: var(--color-text-muted);">Consultas hoje</div>
+    <div class="text-[2.1rem] font-bold mt-1.5 leading-none tabular-nums" style="font-family: var(--font-display);"><%= @appointments_today_count %></div>
+  </div>
+  <div class="card p-4">
+    <div class="font-mono text-[0.6875rem] uppercase tracking-wide" style="color: var(--color-text-muted);">Consultas no mês</div>
+    <div class="text-[2.1rem] font-bold mt-1.5 leading-none tabular-nums" style="font-family: var(--font-display);"><%= @appointments_month_count %></div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4 mb-4">
+  <div class="card p-5">
+    <h2 class="text-base font-semibold mb-3">Unidades</h2>
+    <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left" style="color: var(--color-text-muted);">
+          <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Unidade</th>
+          <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Profissionais</th>
+          <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Consultas hoje</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @unit_stats.each do |s| %>
+          <tr class="border-t" style="border-color: var(--color-border);">
+            <td class="py-2 font-semibold"><%= s[:unit].name %></td>
+            <td class="py-2 tabular-nums"><%= s[:professionals] %></td>
+            <td class="py-2 tabular-nums"><%= s[:today] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card p-5">
+    <h2 class="text-base font-semibold mb-3">Usuários por perfil</h2>
+    <div class="flex flex-col gap-2.5">
+      <% User::ROLES.each do |role| %>
+        <% users = @users_by_role[role] || [] %>
+        <div class="flex items-center justify-between text-sm">
+          <span class="chip chip-neutral"><%= { "admin" => "Administrador", "secretaria" => "Secretária", "medico" => "Médico(a)", "financeiro" => "Financeiro" }[role] %></span>
+          <span class="font-mono tabular-nums" style="color: var(--color-text-muted);"><%= users.size %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4 mb-4">
+  <div class="card p-5">
+    <h2 class="text-base font-semibold mb-3">Profissionais</h2>
+    <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left" style="color: var(--color-text-muted);">
+          <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Nome</th>
+          <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Especialidade</th>
+          <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Unidade</th>
+          <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Consultas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @professionals.each do |p| %>
+          <tr class="border-t" style="border-color: var(--color-border);">
+            <td class="py-2 font-semibold"><%= p.name %></td>
+            <td class="py-2" style="color: var(--color-text-muted);"><%= p.specialty %></td>
+            <td class="py-2"><%= p.unit.name %></td>
+            <td class="py-2 tabular-nums"><%= @appointment_counts_by_professional[p.id] || 0 %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card p-5">
+    <h2 class="text-base font-semibold mb-3">Pacientes recentes</h2>
+    <div class="flex flex-col gap-2.5">
+      <% @recent_patients.each do |patient| %>
+        <%= link_to patient_path(patient), class: "flex items-center gap-2.5 text-sm", style: "color: inherit;" do %>
+          <div class="avatar"><%= patient.initials %></div>
+          <div class="min-w-0">
+            <div class="font-semibold truncate"><%= patient.name %></div>
+            <div class="text-xs" style="color: var(--color-text-muted);"><%= patient.convenio %></div>
+          </div>
+        <% end %>
+      <% end %>
+      <% if @recent_patients.empty? %>
+        <p class="text-sm py-2" style="color: var(--color-text-muted);">Nenhum paciente cadastrado ainda.</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="card p-5">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-base font-semibold">Usuários do sistema</h2>
+    <%= link_to "Gerenciar médicos e secretárias", admin_users_path, class: "btn", style: "padding:5px 10px; font-size:0.75rem;" %>
+  </div>
+  <div class="overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left" style="color: var(--color-text-muted);">
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Nome</th>
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">E-mail</th>
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Perfil</th>
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Unidade</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @users.each do |u| %>
+        <tr class="border-t" style="border-color: var(--color-border);">
+          <td class="py-2 font-semibold"><%= u.name %></td>
+          <td class="py-2" style="color: var(--color-text-muted);"><%= u.email %></td>
+          <td class="py-2"><%= u.display_role %></td>
+          <td class="py-2"><%= u.unit&.name || "Todas" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  </div>
+</div>

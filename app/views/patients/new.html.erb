@@ -1,0 +1,66 @@
+<% content_for :title, "Novo paciente" %>
+<% content_for :subtitle, "Unidade #{current_user.unit&.name || current_user.organization.name}" %>
+
+<div class="max-w-xl">
+  <%= form_with model: @patient, url: patients_path, class: "card p-4" do |f| %>
+    <% if @patient.errors.any? %>
+      <div class="mb-4 px-4 py-2.5 rounded-lg text-sm chip-faltou">
+        <% @patient.errors.full_messages.each do |msg| %>
+          <div><%= msg %></div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      <div class="field col-span-full">
+        <div class="f-label">Nome completo</div>
+        <%= f.text_field :name, class: "field-input" %>
+      </div>
+      <div class="field">
+        <div class="f-label">CPF</div>
+        <%= f.text_field :cpf, class: "field-input", placeholder: "000.000.000-00" %>
+      </div>
+      <div class="field">
+        <div class="f-label">Nascimento</div>
+        <%= f.date_field :birth_date, class: "field-input" %>
+      </div>
+      <div class="field">
+        <div class="f-label">Sexo</div>
+        <%= f.select :sex, Patient::SEX_OPTIONS, { include_blank: "Selecione…" }, class: "field-select" %>
+      </div>
+      <div class="field">
+        <div class="f-label">Telefone</div>
+        <%= f.text_field :phone, class: "field-input" %>
+      </div>
+      <div class="field">
+        <div class="f-label">E-mail</div>
+        <%= f.text_field :email, class: "field-input" %>
+      </div>
+      <div class="field col-span-full">
+        <div class="f-label">Endereço</div>
+        <%= f.text_field :address, class: "field-input" %>
+      </div>
+      <div class="field">
+        <div class="f-label">Convênio</div>
+        <%= f.text_field :convenio, class: "field-input", placeholder: "Ex: Unimed, Particular" %>
+      </div>
+      <div class="field">
+        <div class="f-label">Carteirinha</div>
+        <%= f.text_field :carteirinha, class: "field-input" %>
+      </div>
+      <div class="field">
+        <div class="f-label">Responsável (se menor de idade)</div>
+        <%= f.text_field :guardian_name, class: "field-input" %>
+      </div>
+      <div class="field">
+        <div class="f-label">Alergias</div>
+        <%= f.text_field :allergy, class: "field-input" %>
+      </div>
+    </div>
+
+    <div class="flex gap-2.5 mt-4 pt-4 border-t" style="border-color: var(--color-border);">
+      <%= f.submit "Cadastrar paciente", class: "btn btn-primary" %>
+      <%= link_to "Cancelar", patients_path, class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+</div>

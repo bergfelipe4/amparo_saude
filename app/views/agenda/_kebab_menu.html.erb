@@ -1,0 +1,28 @@
+<div class="appt-kebab" data-controller="kebab-menu">
+  <button type="button" class="appt-kebab-btn" data-action="kebab-menu#toggle" draggable="false" aria-label="Mais opções">⋮</button>
+  <div class="appt-kebab-menu hidden" data-kebab-menu-target="menu" draggable="false">
+    <% if appointment.can_confirm? || appointment.can_start? || appointment.can_finish? || appointment.can_reopen? || appointment.can_mark_no_show? || appointment.can_cancel? %>
+      <div class="appt-kebab-menu-label">Alterar status</div>
+      <% if appointment.can_confirm? %>
+        <%= button_to "Confirmar", confirm_encounter_path(appointment), method: :patch, class: "appt-kebab-menu-item", data: { turbo_frame: "modal" }, form: { data: { turbo_confirm: "Confirmar esta consulta?" } } %>
+      <% end %>
+      <% if appointment.can_start? %>
+        <%= button_to "Iniciar atendimento", start_encounter_path(appointment), method: :patch, class: "appt-kebab-menu-item", data: { turbo_frame: "modal" }, form: { data: { turbo_confirm: "Iniciar o atendimento agora?" } } %>
+      <% end %>
+      <% if appointment.can_finish? %>
+        <%= button_to "Finalizar atendimento", finish_encounter_path(appointment), method: :patch, class: "appt-kebab-menu-item", data: { turbo_frame: "modal" }, form: { data: { turbo_confirm: "Finalizar este atendimento? O prontuário será travado para edição." } } %>
+      <% end %>
+      <% if appointment.can_reopen? %>
+        <%= button_to "Reabrir atendimento", reopen_encounter_path(appointment), method: :patch, class: "appt-kebab-menu-item", data: { turbo_frame: "modal" }, form: { data: { turbo_confirm: "Reabrir este atendimento para edição?" } } %>
+      <% end %>
+      <% if appointment.can_mark_no_show? %>
+        <%= button_to "Marcar falta", no_show_encounter_path(appointment), method: :patch, class: "appt-kebab-menu-item", data: { turbo_frame: "modal" }, form: { data: { turbo_confirm: "Confirmar falta do paciente?" } } %>
+      <% end %>
+      <% if appointment.can_cancel? %>
+        <%= button_to "Cancelar consulta", cancel_encounter_path(appointment), method: :patch, class: "appt-kebab-menu-item", data: { turbo_frame: "modal" }, form: { data: { turbo_confirm: "Cancelar esta consulta?" } } %>
+      <% end %>
+      <div class="appt-kebab-menu-divider"></div>
+    <% end %>
+    <%= button_to "Apagar atendimento", encounter_path(appointment), method: :delete, class: "appt-kebab-menu-item is-danger", form: { data: { turbo_confirm: "Excluir esta consulta? Essa ação não pode ser desfeita." } } %>
+  </div>
+</div>

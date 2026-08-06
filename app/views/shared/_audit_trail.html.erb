@@ -1,0 +1,40 @@
+<div class="flex items-center justify-between mt-6 mb-3">
+  <h2 class="text-base font-semibold">Histórico de alterações</h2>
+  <span class="font-mono text-xs" style="color: var(--color-text-muted);"><%= pluralize(audits.size, "registro") %></span>
+</div>
+
+<% if audits.empty? %>
+  <p class="text-sm py-3" style="color: var(--color-text-muted);">Nenhuma alteração registrada ainda.</p>
+<% else %>
+  <% audits.each do |audit| %>
+    <div class="audit-item">
+      <div class="audit-railcol">
+        <span class="audit-dot <%= audit_dot_class(audit) %>"></span>
+        <span class="audit-line"></span>
+      </div>
+      <div class="audit-body">
+        <% if audit.auditable_type == "AppointmentPermission" %>
+          <div class="text-[0.8125rem]"><%= audit_permission_description(audit) %></div>
+        <% elsif audit.action == "create" %>
+          <div class="text-[0.8125rem]">Registro criado</div>
+        <% elsif audit.action == "destroy" %>
+          <div class="text-[0.8125rem]">Registro removido</div>
+        <% else %>
+          <% audit.audited_changes.each do |field, values| %>
+            <div class="text-[0.8125rem]"><%= audit_field_label(field) %> atualizado</div>
+            <div class="audit-diff">
+              <span class="old"><%= (values.is_a?(Array) ? values[0] : nil).presence || "—" %></span>
+              <span class="arrow">→</span>
+              <span class="new"><%= (values.is_a?(Array) ? values[1] : values).presence || "—" %></span>
+            </div>
+          <% end %>
+        <% end %>
+        <div class="flex items-center gap-1.5 mt-1 text-[0.6875rem]" style="color: var(--color-text-muted);">
+          <span class="avatar" style="width:16px;height:16px;font-size:0.5rem;"><%= audit_actor_initials(audit) %></span>
+          <span><%= audit_actor_name(audit) %></span><span>·</span>
+          <span class="font-mono"><%= l(audit.created_at, format: :short) %></span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>

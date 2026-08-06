@@ -1,0 +1,4 @@
+<% content_for :title, "Editar usuário" %>
+<% content_for :subtitle, @user.name %>
+
+<%= render "form", user: @user, units: @units, professionals: @available_professionals %>

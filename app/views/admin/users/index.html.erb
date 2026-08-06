@@ -1,0 +1,43 @@
+<% content_for :title, "Usuários" %>
+<% content_for :subtitle, "Contas de médicos e secretárias" %>
+
+<div class="flex items-center justify-between mb-4">
+  <span class="text-sm" style="color: var(--color-text-muted);"><%= pluralize(@users.size, "usuário") %></span>
+  <%= link_to "Novo usuário", new_admin_user_path, class: "btn btn-primary" %>
+</div>
+
+<div class="card p-5 overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left" style="color: var(--color-text-muted);">
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Nome</th>
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">E-mail</th>
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Perfil</th>
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Unidade</th>
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2">Assinatura</th>
+        <th class="font-mono text-[0.6875rem] uppercase tracking-wide font-medium pb-2"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @users.each do |u| %>
+        <tr class="border-t" style="border-color: var(--color-border);">
+          <td class="py-2 font-semibold"><%= u.name %></td>
+          <td class="py-2" style="color: var(--color-text-muted);"><%= u.email %></td>
+          <td class="py-2"><span class="chip chip-neutral"><%= u.display_role %></span></td>
+          <td class="py-2"><%= u.unit&.name || "Todas" %></td>
+          <td class="py-2">
+            <% if u.medico? %>
+              <span class="chip <%= u.signature.attached? ? 'chip-confirmado' : 'chip-neutral' %>"><%= u.signature.attached? ? "Anexada" : "Sem assinatura" %></span>
+            <% else %>
+              <span style="color: var(--color-text-muted);">—</span>
+            <% end %>
+          </td>
+          <td class="py-2 text-right"><%= link_to "Editar", edit_admin_user_path(u), class: "btn btn-ghost", style: "padding:4px 10px; font-size:0.75rem;" %></td>
+        </tr>
+      <% end %>
+      <% if @users.empty? %>
+        <tr><td colspan="6" class="py-6 text-center text-sm" style="color: var(--color-text-muted);">Nenhum usuário cadastrado ainda.</td></tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

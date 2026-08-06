@@ -1,0 +1,54 @@
+<% content_for :title, "Atendimento" %>
+<% content_for :subtitle, "#{@appointments.size} #{@showing_recent_fallback ? 'atendimentos recentes' : 'consultas hoje'} · Unidade #{@unit.name}" %>
+
+<div class="flex justify-end mb-3.5">
+  <%= link_to "+ Novo atendimento", new_appointment_path, class: "btn btn-primary" %>
+</div>
+
+<% if @showing_recent_fallback %>
+  <div class="mb-3.5 px-4 py-2.5 rounded-lg text-sm" style="background: var(--color-purple-soft); color: var(--color-purple);">
+    Nenhuma consulta hoje — mostrando os últimos atendimentos.
+  </div>
+<% end %>
+
+<%= form_with url: encounters_path, method: :get, class: "card p-3.5 flex flex-col sm:flex-row gap-2.5 sm:flex-wrap sm:items-center mb-3.5" do %>
+  <select name="professional_id" onchange="this.form.submit()" class="field-select w-full sm:w-auto">
+    <option value="">Todos os profissionais</option>
+    <% @professionals.each do |p| %>
+      <option value="<%= p.id %>" <%= "selected" if params[:professional_id].to_i == p.id %>><%= p.name %></option>
+    <% end %>
+  </select>
+  <select name="status" onchange="this.form.submit()" class="field-select w-full sm:w-auto">
+    <option value="">Todos os status</option>
+    <% Appointment::STATUSES.each do |s| %>
+      <option value="<%= s %>" <%= "selected" if params[:status] == s %>><%= Appointment::STATUS_LABELS[s] %></option>
+    <% end %>
+  </select>
+  <select name="appointment_type" onchange="this.form.submit()" class="field-select w-full sm:w-auto">
+    <option value="">Consulta e retorno</option>
+    <% Appointment::TYPES.each do |t| %>
+      <option value="<%= t %>" <%= "selected" if params[:appointment_type] == t %>>Só <%= t.downcase %>s</option>
+    <% end %>
+  </select>
+  <input type="text" name="q" value="<%= params[:q] %>" placeholder="Buscar paciente…" class="field-input w-full sm:flex-1 sm:min-w-[160px]" />
+  <button type="submit" class="btn w-full sm:w-auto">Filtrar</button>
+  <span class="text-xs sm:ml-auto" style="color: var(--color-text-muted);"><%= @appointments.size %> consultas encontradas</span>
+<% end %>
+
+<div class="encounter-grid mb-1.5">
+  <% if @appointments.empty? %>
+    <div class="text-sm py-6 text-center w-full" style="color: var(--color-text-muted); grid-column: 1 / -1;">Nenhuma consulta encontrada com esses filtros.</div>
+  <% end %>
+  <% @appointments.each do |a| %>
+    <%= link_to encounter_path(a, **filter_params), class: "encounter-card card #{'is-active' if @appointment == a}" do %>
+      <div class="flex items-center justify-between mb-1.5">
+        <div class="font-mono text-xs" style="color: var(--color-text-muted);"><%= a.starts_at.strftime("%d/%m · %H:%M") %></div>
+        <span class="chip chip-<%= a.status %>"><%= a.status_label %></span>
+      </div>
+      <div class="font-semibold text-[0.9375rem] mb-0.5 truncate"><%= a.patient.name %></div>
+      <div class="text-[0.75rem]" style="color: var(--color-text-muted);"><%= a.professional.short_name %> · <%= a.appointment_type %></div>
+    <% end %>
+  <% end %>
+</div>
+
+<%= render "panel" %>
