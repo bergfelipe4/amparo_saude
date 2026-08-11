@@ -24,7 +24,7 @@ gem "bcrypt", "~> 3.1.7"
 gem "audited", "~> 5.6"
 gem "prawn", "~> 2.5"
 gem "prawn-table", "~> 0.2"
-gem "rqrcode", "~> 2.2"
+gem "rqrcode", "~> 3.2"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
