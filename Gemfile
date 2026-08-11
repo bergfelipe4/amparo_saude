@@ -46,9 +46,21 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
+# LLM client (used to talk to OpenRouter) [https://github.com/alexrudall/ruby-openai]
+gem "ruby-openai", "~> 8.3"
+
+# HTTP client com suporte nativo a proxy SOCKS5, usado pra rotear as chamadas
+# da OpenRouter via Tor sem monkey-patchear Net::HTTP globalmente
+gem "excon", "~> 1.7"
+gem "faraday-excon", "~> 2.4"
+gem "faraday-retry", "~> 2.4"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+
+  # Loads OPENROUTER_* env vars from .env in development [https://github.com/bkeepers/dotenv]
+  gem "dotenv-rails"
 
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
   gem "bundler-audit", require: false

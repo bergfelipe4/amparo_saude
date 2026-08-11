@@ -5,6 +5,7 @@ class Patient < ApplicationRecord
   has_many :appointments, dependent: :destroy
   has_many :encounters, dependent: :destroy
   has_many :prescriptions, dependent: :destroy
+  has_many :conversations, dependent: :nullify
 
   validates :name, presence: true
   validates :convenio, presence: true

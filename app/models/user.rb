@@ -5,7 +5,7 @@ class User < ApplicationRecord
   has_secure_password
   has_one_attached :signature
 
-  ROLES = %w[admin secretaria medico financeiro].freeze
+  ROLES = %w[admin secretaria medico financeiro ia].freeze
 
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
@@ -20,12 +20,14 @@ class User < ApplicationRecord
   end
 
   def display_role
-    { "admin" => "Administrador", "secretaria" => "Secretária", "medico" => "Médico(a)", "financeiro" => "Financeiro" }[role]
+    { "admin" => "Administrador", "secretaria" => "Secretária", "medico" => "Médico(a)", "financeiro" => "Financeiro", "ia" => "Secretária IA" }[role]
   end
 
   # Perfis com acesso amplo às telas internas do dia a dia (mas não à visão exclusiva do admin).
+  # "ia" entra aqui porque a secretária virtual precisa enxergar/agendar em qualquer
+  # profissional da unidade, do mesmo jeito que a secretária humana já enxerga.
   def full_access?
-    admin? || secretaria? || financeiro?
+    admin? || secretaria? || financeiro? || ia?
   end
 
   def initials

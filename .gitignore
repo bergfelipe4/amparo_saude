@@ -36,3 +36,10 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Perfil do Chromium/tokens/mídia baixada do WPPConnect (rodado localmente
+# pra dev do WhatsApp) — gerado em runtime na raiz do projeto, caminho fixo
+# da própria lib (não configurável), nunca deve ser versionado.
+/userDataDir
+/tokens
+/WhatsAppImages

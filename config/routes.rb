@@ -33,6 +33,13 @@ Rails.application.routes.draw do
   post "atendimentos/:appointment_id/permissoes", to: "appointment_permissions#create", as: :appointment_permissions
   delete "atendimentos/:appointment_id/permissoes/:id", to: "appointment_permissions#destroy", as: :appointment_permission
 
+  post "whatsapp/webhook", to: "whatsapp#webhook"
+
+  namespace :whatsapp do
+    resource :connection, only: [:show, :create, :destroy]
+    get "connection/status", to: "connections#status", as: :connection_status
+  end
+
   get "admin", to: "admin#show", as: :admin_overview
   namespace :admin do
     resources :users, only: [:index, :new, :create, :edit, :update]

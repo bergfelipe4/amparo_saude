@@ -71,6 +71,7 @@ class Appointment < ApplicationRecord
   def can_reopen? = status == "concluido"
   def can_mark_no_show? = %w[aguardando confirmado].include?(status)
   def can_cancel? = %w[aguardando confirmado].include?(status)
+  def can_reschedule? = %w[aguardando confirmado].include?(status)
   def can_schedule_follow_up? = status == "concluido" && follow_ups.none?
 
   def confirm! = update!(status: "confirmado")

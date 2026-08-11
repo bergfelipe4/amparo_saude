@@ -46,7 +46,7 @@ class EncountersController < ApplicationController
   end
 
   def confirm
-    transition!(:can_confirm?, :confirm!, "Consulta confirmada.", "Só é possível confirmar uma consulta aguardando confirmação.")
+    transition!("confirm", "Consulta confirmada.", "Só é possível confirmar uma consulta aguardando confirmação.")
   end
 
   def start
@@ -71,15 +71,15 @@ class EncountersController < ApplicationController
   end
 
   def reopen
-    transition!(:can_reopen?, :reopen!, "Atendimento reaberto para edição.", "Só é possível reabrir uma consulta concluída.")
+    transition!("reopen", "Atendimento reaberto para edição.", "Só é possível reabrir uma consulta concluída.")
   end
 
   def no_show
-    transition!(:can_mark_no_show?, :mark_no_show!, "Falta registrada.", "Não é possível marcar falta nesse status.")
+    transition!("no_show", "Falta registrada.", "Não é possível marcar falta nesse status.")
   end
 
   def cancel
-    transition!(:can_cancel?, :cancel!, "Consulta cancelada.", "Não é possível cancelar nesse status.")
+    transition!("cancel", "Consulta cancelada.", "Não é possível cancelar nesse status.")
   end
 
   def schedule_follow_up
@@ -118,9 +118,9 @@ class EncountersController < ApplicationController
     turbo_frame_request? && turbo_frame_request_id == "modal"
   end
 
-  def transition!(guard, bang_method, success_msg, failure_msg)
-    if @appointment.public_send(guard)
-      @appointment.public_send(bang_method)
+  def transition!(event, success_msg, failure_msg)
+    @appointment = Scheduling::ChangeStatus.call(appointment: @appointment, event: event, actor: current_user)
+    if @appointment.errors.empty?
       redirect_to encounter_path(@appointment), notice: success_msg
     else
       redirect_to encounter_path(@appointment), alert: failure_msg

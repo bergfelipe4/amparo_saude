@@ -3,6 +3,13 @@ default: &default
     - polling_interval: 1
       batch_size: 500
   workers:
+    # Fila "whatsapp" isolada das demais: um pico de conversa não pode travar
+    # jobs de outra natureza (nem o inverso). Mesmo processo Puma por agora —
+    # ver plano de IA/WhatsApp pra quando extrair um Background Worker dedicado.
+    - queues: "whatsapp"
+      threads: 2
+      processes: 1
+      polling_interval: 1
     - queues: "*"
       threads: 3
       processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>

@@ -1,7 +1,22 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
+# Sobe o Tor como proxy SOCKS5 local (127.0.0.1:9050) antes do Rails, pra
+# nenhuma chamada à OpenRouter saia com o IP real do servidor — mesmo
+# mecanismo usado em desenvolvimento, ver app/services/open_router_client.rb.
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+  mkdir -p /rails/tmp/tor-data
+  /usr/bin/tor -f /rails/config/tor/torrc > /rails/tmp/tor-data/tor.log 2>&1 &
+
+  # A porta SOCKS abre antes do circuito estar pronto — precisa esperar o
+  # bootstrap chegar a 100%, senão a primeira chamada à OpenRouter falha.
+  for i in $(seq 1 60); do
+    if grep -q "Bootstrapped 100%" /rails/tmp/tor-data/tor.log 2>/dev/null; then
+      echo "Tor pronto (circuito estabelecido) em 127.0.0.1:9050"
+      break
+    fi
+    sleep 1
+  done
+
   ./bin/rails db:prepare
 fi
 

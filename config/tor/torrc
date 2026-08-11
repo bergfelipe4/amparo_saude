@@ -1,0 +1,7 @@
+# Torrc mínimo pra rodar como proxy SOCKS5 local dentro do container, sem
+# depender do systemd/usuário debian-tor do pacote apt — só o binário puro,
+# gravando estado num diretório que o usuário "rails" (não-root) já pode escrever.
+SocksPort 127.0.0.1:9050
+DataDirectory /rails/tmp/tor-data
+Log notice stdout
+RunAsDaemon 0

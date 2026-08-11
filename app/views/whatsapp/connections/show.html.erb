@@ -1,0 +1,75 @@
+<% content_for :title, "WhatsApp" %>
+<% content_for :subtitle, "Secretária de IA conectada pelo número da clínica" %>
+
+<div class="p-4 lg:p-7 max-w-3xl mx-auto flex flex-col gap-5"
+     data-controller="whatsapp-connection"
+     data-whatsapp-connection-status-url-value="<%= whatsapp_connection_status_path %>"
+     data-whatsapp-connection-start-url-value="<%= whatsapp_connection_path %>"
+     data-whatsapp-connection-initial-state-value="<%= @organization.whatsapp_connection_status %>">
+
+  <div class="wpp-hero">
+    <div class="wpp-hero-glow"></div>
+    <div class="relative flex items-start gap-4">
+      <div class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0" style="background: rgba(255,255,255,0.16);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M12 3C7 3 3 6.8 3 11.5c0 2.3 1 4.4 2.7 6L5 21l3.8-1.1c1 .4 2.1.6 3.2.6 5 0 9-3.8 9-8.5S17 3 12 3Z" stroke-linejoin="round"/><path d="M8.7 9.8c.3 2.3 2.2 4.2 4.5 4.5" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <h2 class="text-lg font-semibold" style="font-family: var(--font-display);">Secretária de IA no WhatsApp</h2>
+        <p class="text-sm mt-0.5" style="color: rgba(255,255,255,0.85);">Conecte o WhatsApp da <%= @organization.name %> escaneando o QR Code — a partir daí, a I.A. cadastra pacientes, checa horários e marca consultas direto na conversa.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border p-5 flex items-center justify-center overflow-x-auto" style="background: var(--color-surface); border-color: var(--color-border);">
+    <div class="wpp-steps">
+      <div class="wpp-step" data-whatsapp-connection-target="stepGenerate">
+        <div class="wpp-step-dot">1</div>
+        <span class="wpp-step-label">Gerar QR Code</span>
+      </div>
+      <div class="wpp-step-line" data-whatsapp-connection-target="lineOne"></div>
+      <div class="wpp-step" data-whatsapp-connection-target="stepScan">
+        <div class="wpp-step-dot">2</div>
+        <span class="wpp-step-label">Escanear no celular</span>
+      </div>
+      <div class="wpp-step-line" data-whatsapp-connection-target="lineTwo"></div>
+      <div class="wpp-step" data-whatsapp-connection-target="stepDone">
+        <div class="wpp-step-dot">3</div>
+        <span class="wpp-step-label">Conectado</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border p-7 flex flex-col items-center gap-5 text-center" style="background: var(--color-surface); border-color: var(--color-border);">
+    <div class="wpp-status-badge" data-whatsapp-connection-target="badge">
+      <span class="wpp-status-dot"></span>
+      <span data-whatsapp-connection-target="badgeLabel">Carregando…</span>
+    </div>
+
+    <div class="wpp-qr-frame" data-whatsapp-connection-target="qrFrame">
+      <div class="wpp-spinner" data-whatsapp-connection-target="spinner"></div>
+      <img data-whatsapp-connection-target="qrImage" class="hidden" alt="QR Code do WhatsApp">
+      <div class="wpp-check hidden" data-whatsapp-connection-target="checkIcon">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-good)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="24"><path d="M5 13l4 4L19 7"/></svg>
+      </div>
+    </div>
+
+    <p class="text-sm max-w-sm" style="color: var(--color-text-muted);" data-whatsapp-connection-target="helpText">
+      Abra o WhatsApp no celular da clínica → Configurações → Dispositivos conectados → Conectar dispositivo, e escaneie o código acima.
+    </p>
+
+    <div class="flex flex-wrap items-center justify-center gap-2.5" data-whatsapp-connection-target="actions">
+      <button type="button" class="btn btn-primary hidden" data-whatsapp-connection-target="retryButton" data-action="whatsapp-connection#retry">
+        Gerar novo QR Code
+      </button>
+      <%= button_to "Desconectar", whatsapp_connection_path, method: :delete,
+            class: "btn btn-ghost hidden", data: { whatsapp_connection_target: "disconnectButton" },
+            style: "color: var(--color-critical);",
+            form: { data: { turbo_confirm: "Desconectar o WhatsApp da clínica? A secretária de IA para de responder até reconectar." } } %>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border p-5 text-sm flex items-center justify-between gap-3" style="background: var(--color-surface-2); border-color: var(--color-border); color: var(--color-text-muted);">
+    <span>Sessão: <code class="font-mono" style="color: var(--color-text);"><%= @organization.whatsapp_session %></code></span>
+    <span class="font-mono text-xs">v1 · WPPConnect</span>
+  </div>
+</div>

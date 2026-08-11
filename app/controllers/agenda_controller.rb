@@ -4,7 +4,6 @@ class AgendaController < ApplicationController
   ROW_MIN = 30
   ROW_HEIGHT_PX = 48
   SNAP_MIN = 15
-  MOVABLE_STATUSES = %w[aguardando confirmado].freeze
 
   helper_method :slot_top, :slot_height
 
@@ -27,18 +26,17 @@ class AgendaController < ApplicationController
     end
 
     appointment = Appointment.where(unit: @unit).find(params[:id])
-    unless MOVABLE_STATUSES.include?(appointment.status)
-      return render json: { error: "Só é possível remanejar consultas aguardando ou confirmadas." }, status: :unprocessable_entity
-    end
-
     professional = @all_professionals.find { |p| p.id == params[:professional_id].to_i }
     starts_at = parse_time(params[:starts_at])
     unless professional && starts_at
       return render json: { error: "Dados inválidos." }, status: :unprocessable_entity
     end
 
-    duration = appointment.ends_at - appointment.starts_at
-    if appointment.update(professional: professional, starts_at: starts_at, ends_at: starts_at + duration)
+    appointment = Scheduling::RescheduleAppointment.call(
+      appointment: appointment, starts_at: starts_at, professional: professional, actor: current_user
+    )
+
+    if appointment.errors.empty?
       render json: { ok: true }
     else
       render json: { error: appointment.errors.full_messages.to_sentence }, status: :unprocessable_entity

@@ -78,7 +78,7 @@
       <% @professionals.each do |p| %>
         <div class="relative border-l time-grid-col" data-agenda-drag-target="column" data-professional-id="<%= p.id %>" style="border-color: var(--color-border); height: <%= @rows * AgendaController::ROW_HEIGHT_PX %>px;">
           <% @appointments.select { |a| a.professional_id == p.id }.each do |a| %>
-            <% movable = current_user.full_access? && AgendaController::MOVABLE_STATUSES.include?(a.status) %>
+            <% movable = current_user.full_access? && a.can_reschedule? %>
             <% wrapper_data = movable ? { agenda_drag_target: "block", id: a.id, duration_min: ((a.ends_at - a.starts_at) / 60).to_i } : {} %>
             <%= content_tag :div, id: "appointment_#{a.id}", class: "appt-block-wrap", draggable: movable, data: wrapper_data,
                   style: "top:#{slot_top(a.starts_at)}px; height:#{slot_height(a.starts_at, a.ends_at)}px;" do %>

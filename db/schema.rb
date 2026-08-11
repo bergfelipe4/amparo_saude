@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_024739) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,6 +98,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["user_id", "user_type"], name: "user_index"
   end
 
+  create_table "conversations", force: :cascade do |t|
+    t.jsonb "context", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "last_message_at"
+    t.bigint "organization_id", null: false
+    t.bigint "patient_id"
+    t.string "phone_number", null: false
+    t.string "status", default: "aberta", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "phone_number"], name: "index_conversations_on_organization_id_and_phone_number"
+    t.index ["organization_id"], name: "index_conversations_on_organization_id"
+    t.index ["patient_id"], name: "index_conversations_on_patient_id"
+  end
+
   create_table "encounters", force: :cascade do |t|
     t.bigint "appointment_id", null: false
     t.text "assessment"
@@ -121,11 +135,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.index ["professional_id"], name: "index_encounters_on_professional_id"
   end
 
+  create_table "messages", force: :cascade do |t|
+    t.text "content"
+    t.bigint "conversation_id", null: false
+    t.datetime "created_at", null: false
+    t.string "role", null: false
+    t.jsonb "tool_calls"
+    t.jsonb "tool_result"
+    t.string "whatsapp_message_id"
+    t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["whatsapp_message_id"], name: "index_messages_on_whatsapp_message_id"
+  end
+
   create_table "organizations", force: :cascade do |t|
+    t.boolean "ai_enabled", default: false, null: false
     t.datetime "created_at", null: false
     t.string "name"
     t.string "slug"
     t.datetime "updated_at", null: false
+    t.string "whatsapp_connection_status", default: "nao_iniciado", null: false
+    t.string "whatsapp_number"
+    t.string "whatsapp_session_id"
+    t.string "whatsapp_token"
+    t.index ["whatsapp_number"], name: "index_organizations_on_whatsapp_number", unique: true
   end
 
   create_table "patients", force: :cascade do |t|
@@ -151,6 +183,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
     t.string "sex"
     t.datetime "updated_at", null: false
     t.index ["organization_id"], name: "index_patients_on_organization_id"
+    t.index ["phone"], name: "index_patients_on_phone"
   end
 
   create_table "prescription_items", force: :cascade do |t|
@@ -195,11 +228,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
 
   create_table "units", force: :cascade do |t|
     t.string "address"
+    t.integer "closes_at_minutes", default: 1080, null: false
     t.datetime "created_at", null: false
     t.string "name"
+    t.integer "opens_at_minutes", default: 480, null: false
     t.bigint "organization_id", null: false
     t.string "phone"
     t.datetime "updated_at", null: false
+    t.integer "working_days", default: [1, 2, 3, 4, 5], null: false, array: true
     t.index ["organization_id"], name: "index_units_on_organization_id"
   end
 
@@ -230,9 +266,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_090027) do
   add_foreign_key "appointments", "professionals"
   add_foreign_key "appointments", "units"
   add_foreign_key "appointments", "users", column: "created_by_id"
+  add_foreign_key "conversations", "organizations"
+  add_foreign_key "conversations", "patients"
   add_foreign_key "encounters", "appointments"
   add_foreign_key "encounters", "patients"
   add_foreign_key "encounters", "professionals"
+  add_foreign_key "messages", "conversations"
   add_foreign_key "patients", "organizations"
   add_foreign_key "prescription_items", "prescriptions"
   add_foreign_key "prescriptions", "encounters"
