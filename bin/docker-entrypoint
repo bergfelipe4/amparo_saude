@@ -46,15 +46,27 @@ JSON
     # config.json quando ela existe (confirmado lendo o código-fonte) — sem
     # isso ele tentaria subir na mesma porta que o Rails/Puma usa (a env PORT
     # do Render), derrubando os dois.
-    PORT=21465 wppserver --config "$data_dir/config.json" > "$data_dir/wppserver.log" 2>&1 &
+    #
+    # >(...) + tee: manda o log tanto pro arquivo quanto pro stdout do
+    # container, prefixado, senão some — o painel do Render só mostra o
+    # stdout do processo principal, e sem isso um erro do wppserver/Chromium
+    # fica invisível (só dá pra ver entrando via Shell no container).
+    PORT=21465 wppserver --config "$data_dir/config.json" \
+      > >(tee "$data_dir/wppserver.log" | sed 's/^/[wppserver] /') 2>&1 &
 
+    wpp_ready=0
     for i in $(seq 1 30); do
       if curl -sf "http://localhost:21465/api-docs" > /dev/null 2>&1; then
         echo "WPPConnect-server pronto em 127.0.0.1:21465"
+        wpp_ready=1
         break
       fi
       sleep 1
     done
+    if [ "$wpp_ready" -eq 0 ]; then
+      echo "WPPConnect-server NÃO respondeu em 30s — seguindo sem ele. Últimas linhas do log:"
+      tail -n 40 "$data_dir/wppserver.log" 2>/dev/null | sed 's/^/[wppserver] /'
+    fi
   else
     echo "WPPCONNECT_SECRET_KEY não configurada — secretária de IA no WhatsApp desativada nessa instância."
   fi
