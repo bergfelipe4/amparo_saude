@@ -1,9 +1,9 @@
 #!/bin/bash -e
 
-# Sobe o Tor como proxy SOCKS5 local (127.0.0.1:9050) antes do Rails, pra
-# nenhuma chamada à OpenRouter saia com o IP real do servidor — mesmo
-# mecanismo usado em desenvolvimento, ver app/services/open_router_client.rb.
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+  # Sobe o Tor como proxy SOCKS5 local (127.0.0.1:9050) antes do Rails, pra
+  # nenhuma chamada à OpenRouter saia com o IP real do servidor — mesmo
+  # mecanismo usado em desenvolvimento, ver app/services/open_router_client.rb.
   mkdir -p /rails/tmp/tor-data
   /usr/bin/tor -f /rails/config/tor/torrc > /rails/tmp/tor-data/tor.log 2>&1 &
 
@@ -16,6 +16,48 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
     fi
     sleep 1
   done
+
+  # Sobe o WPPConnect-server (fala com o WhatsApp Web de verdade) no mesmo
+  # container, por decisão do time — ver plano de IA/WhatsApp. Sem
+  # WPPCONNECT_SECRET_KEY configurada, só pula essa parte: o resto do sistema
+  # funciona normal, só a secretária de IA no WhatsApp fica indisponível
+  # (Whatsapp::ConnectionsController já degrada bem pra esse caso).
+  #
+  # userData/tokens ficam em /rails/tmp por padrão — SEM disco persistente
+  # do Render montado ali, a sessão do WhatsApp some a cada deploy/restart e
+  # precisa escanear o QR de novo. Pra manter a sessão entre deploys, monte
+  # um Persistent Disk do Render em WPPCONNECT_DATA_DIR.
+  if [ -n "$WPPCONNECT_SECRET_KEY" ]; then
+    data_dir="${WPPCONNECT_DATA_DIR:-/rails/tmp/wppconnect}"
+    mkdir -p "$data_dir/userData"
+
+    cat > "$data_dir/config.json" <<JSON
+{
+  "secretKey": "$WPPCONNECT_SECRET_KEY",
+  "port": "21465",
+  "startAllSession": false,
+  "customUserDataDir": "$data_dir/userData/",
+  "webhook": { "url": "http://localhost:${PORT:-3000}/whatsapp/webhook" },
+  "createOptions": { "autoClose": 0 }
+}
+JSON
+
+    # PORT=21465 explícito: o wppserver lê a env PORT e ignora "port" do
+    # config.json quando ela existe (confirmado lendo o código-fonte) — sem
+    # isso ele tentaria subir na mesma porta que o Rails/Puma usa (a env PORT
+    # do Render), derrubando os dois.
+    PORT=21465 wppserver --config "$data_dir/config.json" > "$data_dir/wppserver.log" 2>&1 &
+
+    for i in $(seq 1 30); do
+      if curl -sf "http://localhost:21465/api-docs" > /dev/null 2>&1; then
+        echo "WPPConnect-server pronto em 127.0.0.1:21465"
+        break
+      fi
+      sleep 1
+    done
+  else
+    echo "WPPCONNECT_SECRET_KEY não configurada — secretária de IA no WhatsApp desativada nessa instância."
+  fi
 
   ./bin/rails db:prepare
 fi

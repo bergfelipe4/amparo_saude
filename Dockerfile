@@ -16,16 +16,34 @@ WORKDIR /rails
 
 # Install base packages
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl postgresql-client libjemalloc2 libvips tor && \
+    apt-get install --no-install-recommends -y curl postgresql-client libjemalloc2 libvips tor \
+      chromium ca-certificates fonts-liberation gnupg && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Node.js (pra rodar o WPPConnect-server, que fala com o WhatsApp Web de
+# verdade — junto nesse mesmo container por decisão do time, ver plano de
+# IA/WhatsApp) + o pacote em si, com a mesma correção de wa-js aplicada em
+# dev: a versão que o npm resolve (^3.23.4) não detecta mensagem recebida
+# numa atualização recente do WhatsApp Web (confirmado em teste real); 4.5.0
+# corrige. Sem essa troca, a IA nunca recebe mensagem nenhuma.
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install --no-install-recommends -y nodejs && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives && \
+    npm install -g @wppconnect/server-cli@1.3.11 && \
+    npm pack @wppconnect/wa-js@4.5.0 -q --pack-destination /tmp && \
+    WA_JS_DIR="$(npm root -g)/@wppconnect/server-cli/node_modules/@wppconnect/wa-js" && \
+    rm -rf "$WA_JS_DIR" && mkdir -p "$WA_JS_DIR" && \
+    tar xzf /tmp/wppconnect-wa-js-4.5.0.tgz -C "$WA_JS_DIR" --strip-components=1 && \
+    rm /tmp/wppconnect-wa-js-4.5.0.tgz
 
 # Set production environment variables and enable jemalloc for reduced memory usage and latency.
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development" \
-    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
+    LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
+    WPPCONNECT_BASE_URL="http://localhost:21465"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
