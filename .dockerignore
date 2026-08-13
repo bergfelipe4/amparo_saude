@@ -49,3 +49,9 @@
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
+
+# Artefatos locais do WPPConnect rodado fora do Docker pra dev (perfil do
+# Chromium, tokens, mídia baixada) — nunca devem entrar na imagem.
+/userDataDir
+/tokens
+/WhatsAppImages

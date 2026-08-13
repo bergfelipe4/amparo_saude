@@ -51,7 +51,15 @@ JSON
     # container, prefixado, senão some — o painel do Render só mostra o
     # stdout do processo principal, e sem isso um erro do wppserver/Chromium
     # fica invisível (só dá pra ver entrando via Shell no container).
-    PORT=21465 wppserver --config "$data_dir/config.json" \
+    #
+    # (cd "$data_dir" && ...) num subshell: o wppconnect-server sempre cria
+    # ./WhatsAppImages e ./uploads relativos ao diretório de trabalho no
+    # boot, sem opção de configurar isso — rodando com cwd em /rails, quebra
+    # com EACCES em produção (a raiz do app é só-leitura, só /rails/tmp e
+    # afins são graváveis; confirmado em teste real no Render). O subshell
+    # isola o cd pra não afetar o resto deste script (o db:prepare mais
+    # abaixo depende do cwd continuar em /rails).
+    (cd "$data_dir" && PORT=21465 wppserver --config "$data_dir/config.json") \
       > >(tee "$data_dir/wppserver.log" | sed 's/^/[wppserver] /') 2>&1 &
 
     wpp_ready=0
