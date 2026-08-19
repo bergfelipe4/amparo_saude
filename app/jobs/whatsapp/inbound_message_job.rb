@@ -12,6 +12,13 @@ module Whatsapp
     # conversas antigas de uma vez, gastando API à toa e entupindo a fila.
     BACKLOG_CUTOFF = 2.minutes
 
+    # Simula velocidade de digitação humana (chars/segundo) pro atraso antes
+    # de responder — clamp em 1..10s por pedido explícito: rápido demais
+    # denuncia bot, devagar demais incomoda quem está esperando.
+    TYPING_CHARS_PER_SECOND = 12.0
+    MIN_DELAY = 1.0
+    MAX_DELAY = 10.0
+
     def perform(payload)
       organization = find_organization(payload)
       return if organization.nil? || !organization.ai_enabled?
@@ -32,16 +39,27 @@ module Whatsapp
       conversation.messages.create!(role: "user", content: body, whatsapp_message_id: whatsapp_message_id)
       conversation.update!(last_message_at: Time.current)
 
+      client = Whatsapp::Client.build
+      session, token = organization.whatsapp_session_id, organization.whatsapp_token
+      client.set_typing(session: session, token: token, phone: phone, typing: true)
+
       reply = Ai::SecretaryAgent.call(conversation: conversation)
       conversation.messages.create!(role: "assistant", content: reply)
 
-      Whatsapp::Client.build.send_message(
-        session: organization.whatsapp_session_id, token: organization.whatsapp_token,
-        phone: phone, message: reply
-      )
+      # "Digitando..." já está ligado desde antes da IA processar — soma-se
+      # aqui só o tempo humano de "terminar de digitar" a resposta pronta,
+      # proporcional ao tamanho dela.
+      sleep(typing_delay_seconds(reply))
+
+      client.set_typing(session: session, token: token, phone: phone, typing: false)
+      client.send_message(session: session, token: token, phone: phone, message: reply)
     end
 
     private
+
+    def typing_delay_seconds(text)
+      (text.to_s.length / TYPING_CHARS_PER_SECOND + rand(0.3..1.2)).clamp(MIN_DELAY, MAX_DELAY)
+    end
 
     # V1: piloto de uma clínica só. Sem sessão configurada ainda em
     # whatsapp_session_id, cai pra primeira organização — precisa apertar essa

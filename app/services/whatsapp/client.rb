@@ -58,6 +58,15 @@ module Whatsapp
       authed_post("/api/#{session}/send-message", token, { phone: phone, message: message }).present?
     end
 
+    # Liga/desliga o "digitando..." no chat — usado junto com um atraso
+    # antes de responder pra parecer uma secretária de verdade, não um bot
+    # respondendo instantaneamente.
+    def set_typing(session:, token:, phone:, typing:)
+      return true unless configured? && token.present?
+
+      authed_post("/api/#{session}/typing", token, { phone: phone, value: typing }).present?
+    end
+
     private
 
     def authed_post(path, token, body = nil)
