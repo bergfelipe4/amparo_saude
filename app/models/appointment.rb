@@ -8,6 +8,7 @@ class Appointment < ApplicationRecord
   belongs_to :unit
   belongs_to :professional
   belongs_to :patient
+  belongs_to :conversation, optional: true
   belongs_to :follow_up_of, class_name: "Appointment", optional: true
   belongs_to :created_by, class_name: "User", optional: true
   has_many :follow_ups, class_name: "Appointment", foreign_key: :follow_up_of_id, dependent: :nullify
@@ -18,6 +19,8 @@ class Appointment < ApplicationRecord
   validates :starts_at, :ends_at, presence: true
   validates :appointment_type, inclusion: { in: TYPES }
   validates :status, inclusion: { in: STATUSES }
+
+  after_update_commit :enqueue_whatsapp_confirmation, if: :whatsapp_confirmation_required?
 
   scope :for_day, ->(date) { where(starts_at: date.beginning_of_day..date.end_of_day) }
   scope :ordered, -> { order(:starts_at) }
@@ -54,7 +57,7 @@ class Appointment < ApplicationRecord
     "atendimento" => "Em atendimento",
     "concluido" => "Concluído",
     "faltou" => "Faltou",
-    "cancelado" => "Cancelado",
+    "cancelado" => "Cancelado"
   }.freeze
 
   def status_label
@@ -80,4 +83,14 @@ class Appointment < ApplicationRecord
   def reopen! = update!(status: "atendimento")
   def mark_no_show! = update!(status: "faltou")
   def cancel! = update!(status: "cancelado")
+
+  private
+
+  def whatsapp_confirmation_required?
+    saved_change_to_status? && status == "confirmado" && conversation_id.present? && created_by&.ia?
+  end
+
+  def enqueue_whatsapp_confirmation
+    Whatsapp::AppointmentConfirmedJob.perform_later(id)
+  end
 end

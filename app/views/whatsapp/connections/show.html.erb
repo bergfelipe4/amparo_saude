@@ -72,4 +72,15 @@
     <span>Sessão: <code class="font-mono" style="color: var(--color-text);"><%= @organization.whatsapp_session %></code></span>
     <span class="font-mono text-xs">v1 · WPPConnect</span>
   </div>
+
+  <div class="section-card" data-controller="profile-sections" data-profile-sections-active-value="modelo">
+    <div class="section-card-heading"><span class="encounter-section-icon"><%= render "encounters/section_icon", name: "prontuario" %></span><div><h3>Configurações da secretária IA</h3><p>Modelo, comportamento e quem pode receber resposta automática.</p></div></div>
+    <div class="encounter-section-tabs" role="tablist" aria-label="Configurações da IA"><% [["modelo", "Modelo"], ["comportamento", "Comportamento"], ["numeros", "Números"]].each do |section, label| %><button type="button" class="encounter-section-tab" role="tab" aria-selected="false" data-profile-sections-target="tab" data-section="<%= section %>" data-action="profile-sections#select"><%= label %></button><% end %></div>
+    <%= form_with model: @organization, url: whatsapp_connection_path, method: :patch do |f| %>
+      <section data-profile-sections-target="panel" data-section="modelo"><div class="model-choice-grid"><% Ai::ModelCatalog::OPTIONS.each do |key, option| %><label class="model-choice <%= "is-selected" if @organization.ai_model == key %>"><%= f.radio_button :ai_model, key, class: "sr-only" %><strong><%= option[:name] %></strong><span><%= option[:tier] %></span><small><%= key == "gpt_4o_mini" ? "Menor custo por token" : key == "gpt_5_2" ? "Opção premium" : "Cobrança por token configurável" %></small></label><% end %></div></section>
+      <section data-profile-sections-target="panel" data-section="comportamento" hidden><div class="field"><div class="f-label">Instruções adicionais</div><%= f.text_area :ai_instructions, class: "field-input", style: "min-height:130px;resize:vertical", placeholder: "Ex.: use um tom mais formal; avise que atendemos de segunda a sexta; não responda sobre valores." %></div></section>
+      <section data-profile-sections-target="panel" data-section="numeros" hidden><div class="field"><div class="f-label">Quem a IA deve responder?</div><%= f.select :ai_phone_policy, [["Responder todos os números", "all"], ["Responder somente os números da lista", "only_listed"], ["Responder todos, exceto os da lista", "everyone_except_listed"]], {}, class: "field-select" %></div><div class="field mt-4"><div class="f-label">Lista de números</div><%= f.text_area :ai_phone_numbers, value: Array(@organization.ai_phone_numbers).join("\n"), class: "field-input", style: "min-height:120px;resize:vertical", placeholder: "Um número por linha, com DDD" %><p class="text-xs mt-2" style="color:var(--color-text-muted)">Use a lista para incluir somente estes números ou excluir estes números, conforme a opção escolhida.</p></div></section>
+      <%= f.submit "Salvar configurações", class: "btn btn-primary mt-5" %>
+    <% end %>
+  </div>
 </div>

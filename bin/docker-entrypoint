@@ -31,19 +31,20 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
     data_dir="${WPPCONNECT_DATA_DIR:-/rails/tmp/wppconnect}"
     mkdir -p "$data_dir/userData"
 
-    # browserArgs: os primeiros 21 flags são o padrão do próprio
-    # wppconnect-server (setar createOptions substitui o array inteiro, não
-    # soma — por isso repete tudo); os últimos 4 são nossos, pra caber no
-    # free tier do Render (512MB RAM / 0.1 vCPU): --single-process +
-    # --no-zygote colapsam os vários processos filhos do Chromium (GPU,
-    # rede, renderer) num só, e --js-flags limita o heap do V8.
+    # browserArgs repete o padrão do próprio wppconnect-server porque setar
+    # createOptions substitui o array inteiro. Não force single-process,
+    # no-zygote nem limite artificial de heap: esses ajustes usados no Render
+    # free deixam o Chromium instável quando recebe e processa mensagens.
     cat > "$data_dir/config.json" <<JSON
 {
   "secretKey": "$WPPCONNECT_SECRET_KEY",
   "port": "21465",
   "startAllSession": false,
   "customUserDataDir": "$data_dir/userData/",
-  "webhook": { "url": "http://localhost:${PORT:-3000}/whatsapp/webhook" },
+  "webhook": {
+    "url": "http://localhost:${PORT:-3000}/whatsapp/webhook",
+    "autoDownload": false
+  },
   "createOptions": {
     "autoClose": 0,
     "browserArgs": [
@@ -55,9 +56,7 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
       "--hide-scrollbars", "--metrics-recording-only", "--mute-audio",
       "--no-first-run", "--safebrowsing-disable-auto-update",
       "--ignore-certificate-errors", "--ignore-ssl-errors",
-      "--ignore-certificate-errors-spki-list",
-      "--single-process", "--no-zygote", "--disable-gpu",
-      "--js-flags=--max-old-space-size=128"
+      "--ignore-certificate-errors-spki-list"
     ]
   }
 }

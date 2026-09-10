@@ -13,10 +13,11 @@ module Patients
     # Retorna o Patient — existente, ou um novo (persistido se os dados
     # informados forem suficientes; com .errors se não).
     def call
-      existing = @organization.patients.find_by(phone: @phone)
+      existing = Patients::FindByPhone.call(organization: @organization, phone: @phone)
       return existing if existing
 
-      @organization.patients.new(@attributes.merge(phone: @phone)).tap(&:save)
+      phone_attribute = @phone.presence
+      @organization.patients.new(@attributes.merge(phone: phone_attribute)).tap(&:save)
     end
   end
 end

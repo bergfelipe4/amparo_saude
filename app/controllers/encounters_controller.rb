@@ -26,6 +26,32 @@ class EncountersController < ApplicationController
     end
   end
 
+  def update_appointment
+    unless current_user.full_access?
+      redirect_to encounter_path(@appointment, **filter_params), alert: "Você não tem permissão para editar consultas." and return
+    end
+
+    professional = @unit.professionals.find_by(id: appointment_update_params[:professional_id])
+    starts_at = parse_appointment_time(appointment_update_params[:starts_at])
+    unless professional && starts_at
+      redirect_to encounter_path(@appointment, **filter_params), alert: "Informe um profissional e uma data válidos." and return
+    end
+
+    @appointment = Scheduling::RescheduleAppointment.call(
+      appointment: @appointment,
+      starts_at: starts_at,
+      professional: professional,
+      appointment_type: appointment_update_params[:appointment_type],
+      actor: current_user
+    )
+
+    if @appointment.errors.empty?
+      redirect_to encounter_path(@appointment, **filter_params), notice: "Consulta atualizada."
+    else
+      redirect_to encounter_path(@appointment, **filter_params), alert: @appointment.errors.full_messages.to_sentence
+    end
+  end
+
   def destroy
     unless current_user.full_access?
       redirect_to encounters_path, alert: "Você não tem permissão para excluir consultas." and return
@@ -134,6 +160,12 @@ class EncountersController < ApplicationController
     nil
   end
 
+  def parse_appointment_time(value)
+    Time.zone.parse(value) if value.present?
+  rescue ArgumentError
+    nil
+  end
+
   def set_unit
     @unit = current_user.unit || current_user.organization.units.first
     @professionals = @unit.professionals.order(:name)
@@ -183,6 +215,10 @@ class EncountersController < ApplicationController
     )
     permitted[:custom_fields] = compact_custom_fields(permitted[:custom_fields]) if permitted.key?(:custom_fields)
     permitted
+  end
+
+  def appointment_update_params
+    params.require(:appointment).permit(:starts_at, :professional_id, :appointment_type)
   end
 
   def compact_custom_fields(fields)

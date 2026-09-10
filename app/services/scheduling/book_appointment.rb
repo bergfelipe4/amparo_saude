@@ -7,7 +7,7 @@ module Scheduling
 
     def self.call(...) = new(...).call
 
-    def initialize(organization:, unit:, professional:, patient:, starts_at:, duration_minutes: DEFAULT_DURATION_MINUTES, appointment_type: "Consulta", actor: nil)
+    def initialize(organization:, unit:, professional:, patient:, starts_at:, duration_minutes: DEFAULT_DURATION_MINUTES, appointment_type: "Consulta", actor: nil, conversation: nil)
       @organization = organization
       @unit = unit
       @professional = professional
@@ -16,6 +16,7 @@ module Scheduling
       @duration_minutes = duration_minutes
       @appointment_type = appointment_type
       @actor = actor
+      @conversation = conversation
     end
 
     # Retorna o Appointment — persistido se deu certo, com erros em .errors se não.
@@ -29,7 +30,8 @@ module Scheduling
           starts_at: @starts_at,
           ends_at: @starts_at + @duration_minutes.minutes,
           status: "aguardando",
-          created_by: @actor
+          created_by: @actor,
+          conversation: @conversation
         )
       end
     end

@@ -1,0 +1,15 @@
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <% if name == "prontuario" %>
+    <path d="M8 3h8l3 3v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2"/><path d="M9 3h6v4H9zM8 12h8M8 16h5"/>
+  <% elsif name == "receitas" %>
+    <path d="M7 3h10l3 3v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2"/><path d="M9 3h6v4H9zM8 13h8M12 10v6"/>
+  <% elsif name == "permissoes" %>
+    <path d="M12 3 4.5 6v5c0 4.7 3.1 8 7.5 10 4.4-2 7.5-5.3 7.5-10V6z"/><path d="M9 12l2 2 4-4"/>
+  <% elsif name == "alteracoes" %>
+    <path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5M12 7v5l3 2"/>
+  <% elsif name == "documentos" %>
+    <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>
+  <% elsif name == "editar" %>
+    <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="m13.5 8.5 3 3M4 4h6"/>
+  <% end %>
+</svg>

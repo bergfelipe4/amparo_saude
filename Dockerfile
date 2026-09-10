@@ -43,7 +43,9 @@ ENV RAILS_ENV="production" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
-    WPPCONNECT_BASE_URL="http://localhost:21465"
+    WPPCONNECT_BASE_URL="http://localhost:21465" \
+    OPENROUTER_MODEL="openai/gpt-5-mini" \
+    OPENROUTER_REASONING_EFFORT="low"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build

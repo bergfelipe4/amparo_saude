@@ -23,11 +23,12 @@
     <details class="relative">
       <summary class="btn" style="cursor:pointer;">Médicos (<%= @professionals.size %>/<%= @all_professionals.size %>)</summary>
       <div class="card p-3 absolute mt-2" style="min-width:220px; z-index:20;">
-        <%= form_with url: agenda_path, method: :get, class: "flex flex-col gap-2" do %>
+        <%= form_with url: agenda_path, method: :get, class: "flex flex-col gap-2", data: { controller: "selection-limit", selection_limit_limit_value: 4 } do %>
           <%= hidden_field_tag :date, @date.iso8601 %>
+          <p class="text-xs" style="color:var(--color-text-muted);">Selecione até 4 médicos (<span data-selection-limit-target="count"><%= @selected_professional_ids.size %>/4</span>).</p>
           <% @all_professionals.each do |p| %>
             <label class="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="professional_ids[]" value="<%= p.id %>" <%= "checked" if @selected_professional_ids.include?(p.id) %>>
+              <input type="checkbox" name="professional_ids[]" value="<%= p.id %>" <%= "checked" if @selected_professional_ids.include?(p.id) %> data-selection-limit-target="checkbox" data-action="change->selection-limit#refresh">
               <%= p.name %>
             </label>
           <% end %>

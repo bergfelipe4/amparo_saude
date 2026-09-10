@@ -35,12 +35,12 @@
   <span class="text-xs sm:ml-auto" style="color: var(--color-text-muted);"><%= @appointments.size %> consultas encontradas</span>
 <% end %>
 
-<div class="encounter-grid mb-1.5">
+<div class="encounter-grid mb-1.5" data-controller="encounter-mobile-focus">
   <% if @appointments.empty? %>
     <div class="text-sm py-6 text-center w-full" style="color: var(--color-text-muted); grid-column: 1 / -1;">Nenhuma consulta encontrada com esses filtros.</div>
   <% end %>
   <% @appointments.each do |a| %>
-    <%= link_to encounter_path(a, **filter_params), class: "encounter-card card #{'is-active' if @appointment == a}" do %>
+    <%= link_to encounter_path(a, **filter_params), class: "encounter-card card #{'is-active' if @appointment == a}", data: { action: "click->encounter-mobile-focus#focus" } do %>
       <div class="flex items-center justify-between mb-1.5">
         <div class="font-mono text-xs" style="color: var(--color-text-muted);"><%= a.starts_at.strftime("%d/%m · %H:%M") %></div>
         <span class="chip chip-<%= a.status %>"><%= a.status_label %></span>

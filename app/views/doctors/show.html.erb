@@ -1,0 +1,49 @@
+<% content_for :title, "Médicos" %>
+<% content_for :subtitle, "#{pluralize(@professionals.size, 'médico cadastrado', plural: 'médicos cadastrados')} · #{current_user.organization.name}" %>
+
+<div class="grid gap-4 grid-cols-1 lg:grid-cols-[300px_1fr]">
+  <div class="flex flex-col gap-2.5 col-span-full">
+    <% if current_user.admin? %><%= link_to "+ Novo médico", new_admin_user_path, class: "btn btn-primary", style: "align-self:flex-start" %><% end %>
+  </div>
+
+  <aside class="card p-2 overflow-y-auto max-h-[50vh] lg:max-h-[74vh]">
+    <% @professionals.each do |professional| %>
+      <%= link_to doctor_path(professional), class: "profile-list-item #{'is-active' if @professional == professional}" do %>
+        <div class="avatar"><%= professional.short_name.split.map(&:first).first(2).join.upcase %></div>
+        <div class="min-w-0 flex-1"><div class="font-semibold text-[.8438rem] truncate"><%= professional.name %></div><div class="text-[.6875rem] truncate" style="color:var(--color-text-muted)"><%= professional.specialty %></div></div>
+        <% if professional.user&.signature&.attached? %><span class="profile-list-status" title="Assinatura cadastrada"></span><% end %>
+      <% end %>
+    <% end %>
+  </aside>
+
+  <% if @professional %>
+    <% doctor_user = @professional.user %>
+    <div>
+      <div class="card p-5 mb-3.5">
+        <div class="flex justify-between items-start gap-3 flex-wrap">
+          <div class="flex items-center gap-3"><div class="profile-hero-avatar"><%= @professional.short_name.split.map(&:first).first(2).join.upcase %></div><div><h2 class="text-[1.375rem] font-semibold"><%= @professional.name %></h2><p class="text-sm mt-1" style="color:var(--color-text-muted)"><%= @professional.specialty %> · <%= @professional.crm %></p></div></div>
+          <span class="chip chip-confirmado">Profissional ativo</span>
+        </div>
+        <div class="profile-stat-grid mt-5 pt-4 border-t" style="border-color:var(--color-border)"><div><span>Consultas</span><strong><%= @appointments.size %></strong></div><div><span>Pacientes atendidos</span><strong><%= @patients.size %></strong></div><div><span>Unidade</span><strong><%= @professional.unit.name %></strong></div><div><span>Assinatura</span><strong><%= doctor_user&.signature&.attached? ? "Cadastrada" : "Pendente" %></strong></div></div>
+      </div>
+
+      <div class="profile-sections" data-controller="profile-sections" data-profile-sections-active-value="visao-geral">
+        <div class="encounter-section-tabs" role="tablist" aria-label="Seções do médico">
+          <% [["visao-geral", "Visão geral", "prontuario"], ["consultas", "Consultas", "alteracoes"], ["pacientes", "Pacientes", "permissoes"], ["assinatura", "Assinatura", "editar"]].each do |section, label, icon| %>
+            <button type="button" class="encounter-section-tab" role="tab" aria-selected="false" data-profile-sections-target="tab" data-section="<%= section %>" data-action="profile-sections#select"><span class="encounter-section-icon"><%= render "encounters/section_icon", name: icon %></span><span><%= label %></span></button>
+          <% end %>
+        </div>
+
+        <section class="encounter-section-panel" role="tabpanel" data-profile-sections-target="panel" data-section="visao-geral">
+          <div class="section-card"><div class="section-card-heading"><span class="encounter-section-icon"><%= render "encounters/section_icon", name: "prontuario" %></span><div><h3>Perfil profissional</h3><p>Dados de atuação e próximos atendimentos.</p></div></div><div class="info-list"><div class="info-row"><div class="info-label">Especialidade</div><div class="info-value"><%= @professional.specialty %></div></div><div class="info-row"><div class="info-label">Registro profissional</div><div class="info-value font-mono"><%= @professional.crm %></div></div><div class="info-row"><div class="info-label">Unidade</div><div class="info-value"><%= @professional.unit.name %></div></div><div class="info-row"><div class="info-label">E-mail de acesso</div><div class="info-value"><%= doctor_user&.email || "Conta ainda não vinculada" %></div></div></div><div class="section-divider"></div><div class="flex items-center justify-between mb-3"><h3 class="text-sm font-semibold">Próximas consultas</h3><span class="text-xs font-mono" style="color:var(--color-text-muted)"><%= @upcoming_appointments.size %></span></div><% if @upcoming_appointments.any? %><% @upcoming_appointments.each do |appointment| %><%= link_to encounter_path(appointment), class: "document-row", style: "color:inherit" do %><div><strong><%= appointment.patient.name %></strong><p><%= l(appointment.starts_at, format: :short) %> · <%= appointment.appointment_type %></p></div><span class="chip chip-<%= appointment.status %>"><%= appointment.status_label %></span><% end %><% end %><% else %><p class="text-sm" style="color:var(--color-text-muted)">Nenhuma consulta futura agendada.</p><% end %></div>
+        </section>
+
+        <section class="encounter-section-panel" role="tabpanel" data-profile-sections-target="panel" data-section="consultas" hidden><div class="section-card"><div class="section-card-heading"><span class="encounter-section-icon"><%= render "encounters/section_icon", name: "alteracoes" %></span><div><h3>Consultas</h3><p>Histórico completo de atendimentos deste médico.</p></div></div><% if @appointments.any? %><% @appointments.each do |appointment| %><%= link_to encounter_path(appointment), class: "document-row", style: "color:inherit" do %><div><strong><%= appointment.patient.name %></strong><p><%= l(appointment.starts_at, format: :short) %> · <%= appointment.appointment_type %> · <%= appointment.unit.name %></p></div><span class="chip chip-<%= appointment.status %>"><%= appointment.status_label %></span><% end %><% end %><% else %><div class="section-empty"><p>Nenhuma consulta registrada.</p></div><% end %></div></section>
+
+        <section class="encounter-section-panel" role="tabpanel" data-profile-sections-target="panel" data-section="pacientes" hidden><div class="section-card"><div class="section-card-heading"><span class="encounter-section-icon"><%= render "encounters/section_icon", name: "permissoes" %></span><div><h3>Pacientes</h3><p><%= pluralize(@patients.size, "paciente atendido") %> por este médico.</p></div></div><% if @patients.any? %><div class="profile-person-grid"><% @patients.each do |patient| %><%= link_to patient_path(patient), class: "profile-person" do %><span class="avatar"><%= patient.initials %></span><span><strong><%= patient.name %></strong><small><%= patient.convenio %></small></span><% end %><% end %></div><% else %><div class="section-empty"><p>Nenhum paciente vinculado ainda.</p></div><% end %></div></section>
+
+        <section class="encounter-section-panel" role="tabpanel" data-profile-sections-target="panel" data-section="assinatura" hidden><div class="section-card"><div class="section-card-heading"><span class="encounter-section-icon"><%= render "encounters/section_icon", name: "editar" %></span><div><h3>Assinatura profissional</h3><p>Assinatura do cadastro profissional. Formato PNG.</p></div></div><% if doctor_user&.signature&.attached? %><div class="signature-preview"><%= image_tag url_for(doctor_user.signature), alt: "Assinatura de #{@professional.name}" %></div><% else %><div class="section-empty"><p>Nenhuma assinatura cadastrada.</p></div><% end %><% if current_user.admin? || current_user.professional_id == @professional.id %><%= form_with model: doctor_user || User.new, url: doctor_path(@professional), method: :patch, class: "mt-5" do |f| %><div class="field"><div class="f-label">Arquivo PNG</div><%= f.file_field :signature, accept: "image/png", class: "field-input" %></div><%= f.submit doctor_user&.signature&.attached? ? "Trocar assinatura" : "Adicionar assinatura", class: "btn btn-primary mt-3" %><% end %><% else %><p class="text-xs mt-4" style="color:var(--color-text-muted)">Somente o próprio médico ou um administrador pode alterar esta assinatura.</p><% end %></div></section>
+      </div>
+    </div>
+  <% end %>
+</div>

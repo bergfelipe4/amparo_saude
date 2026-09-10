@@ -10,12 +10,14 @@ Rails.application.routes.draw do
   patch "agenda/:id", to: "agenda#move", as: :move_agenda_appointment
 
   resources :patients, only: [:index, :show, :new, :create, :update]
+  resources :doctors, only: [:index, :show, :update]
 
   get "atendimentos", to: "encounters#index", as: :encounters
   get "atendimentos/novo", to: "appointments#new", as: :new_appointment
   post "atendimentos", to: "appointments#create", as: :appointments
   get "atendimentos/:appointment_id", to: "encounters#show", as: :encounter
   patch "atendimentos/:appointment_id", to: "encounters#update"
+  patch "atendimentos/:appointment_id/consulta", to: "encounters#update_appointment", as: :update_encounter_appointment
   delete "atendimentos/:appointment_id", to: "encounters#destroy"
   get "atendimentos/:appointment_id/imprimir", to: "encounters#print", as: :print_encounter
 
@@ -36,7 +38,7 @@ Rails.application.routes.draw do
   post "whatsapp/webhook", to: "whatsapp#webhook"
 
   namespace :whatsapp do
-    resource :connection, only: [:show, :create, :destroy]
+    resource :connection, only: [:show, :create, :update, :destroy]
     get "connection/status", to: "connections#status", as: :connection_status
   end
 

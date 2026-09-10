@@ -6,9 +6,21 @@ class Organization < ApplicationRecord
   has_many :appointments, dependent: :destroy
   has_many :prescriptions, dependent: :destroy
   has_many :conversations, dependent: :destroy
+  has_many :ai_token_usages, dependent: :destroy
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
+  validates :ai_model, inclusion: { in: Ai::ModelCatalog::OPTIONS.keys }
+  validates :ai_phone_policy, inclusion: { in: %w[all only_listed everyone_except_listed] }
+
+  def ai_responds_to_phone?(phone)
+    normalized = phone.to_s.gsub(/\D/, "")
+    listed = Array(ai_phone_numbers).any? { |number| number.to_s.gsub(/\D/, "") == normalized }
+    return true if ai_phone_policy == "all"
+    return listed if ai_phone_policy == "only_listed"
+
+    !listed
+  end
 
   # Usuário-sistema usado como autor (Audited) das ações que a secretária de
   # IA executa em nome desta organização — não faz login, só existe pra que o

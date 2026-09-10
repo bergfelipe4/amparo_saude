@@ -32,6 +32,17 @@ module Whatsapp
       render json: { ok: true }
     end
 
+    def update
+      attributes = ai_configuration_params.to_h
+      attributes[:ai_phone_numbers] = attributes[:ai_phone_numbers].to_s.lines.map { |number| number.gsub(/\D/, "") }.reject(&:blank?).uniq
+
+      if @organization.update(attributes)
+        redirect_to whatsapp_connection_path, notice: "Configuração da secretária IA atualizada."
+      else
+        redirect_to whatsapp_connection_path, alert: @organization.errors.full_messages.to_sentence
+      end
+    end
+
     # Polling: estado atual + QR Code (se disponível).
     def status
       client = Whatsapp::Client.build
@@ -61,6 +72,10 @@ module Whatsapp
 
     def set_organization
       @organization = current_user.organization
+    end
+
+    def ai_configuration_params
+      params.require(:organization).permit(:ai_model, :ai_instructions, :ai_phone_policy, :ai_phone_numbers)
     end
 
     def render_wppconnect_unreachable

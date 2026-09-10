@@ -6,10 +6,13 @@ class WhatsappController < ActionController::Base
 
   def webhook
     return head :unauthorized unless valid_secret?
+    return head :ok if boolean_param?(:fromMe) || boolean_param?(:isGroupMsg)
+    return head :ok unless params[:type] == "chat"
 
-    payload = params.to_unsafe_h.deep_stringify_keys
-    return head :ok if payload["fromMe"] || payload["isGroupMsg"]
-
+    payload = params.permit(
+      :event, :session, :id, :type, :t, :from, :phone,
+      :body, :content, :message, :isGroupMsg, :fromMe
+    ).to_h.deep_stringify_keys
     Whatsapp::InboundMessageJob.perform_later(payload)
     head :ok
   end
@@ -23,5 +26,9 @@ class WhatsappController < ActionController::Base
     return true if expected.blank?
 
     request.headers["X-Webhook-Secret"].to_s == expected
+  end
+
+  def boolean_param?(key)
+    ActiveModel::Type::Boolean.new.cast(params[key])
   end
 end

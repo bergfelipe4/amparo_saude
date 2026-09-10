@@ -61,7 +61,9 @@ class AgendaController < ApplicationController
 
   def selected_professional_ids
     ids = Array(params[:professional_ids]).map(&:to_i)
-    ids.presence || @all_professionals.map(&:id)
+    # A agenda fica legível com no máximo quatro colunas, mas todos os médicos
+    # continuam disponíveis no seletor.
+    (ids.presence || @all_professionals.map(&:id)).first(4)
   end
 
   def parse_date(str)

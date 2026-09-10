@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_024739) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_200100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_024739) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "ai_token_usages", force: :cascade do |t|
+    t.bigint "conversation_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "input_tokens", default: 0, null: false
+    t.string "model", null: false
+    t.bigint "organization_id", null: false
+    t.integer "output_tokens", default: 0, null: false
+    t.integer "total_tokens", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id"], name: "index_ai_token_usages_on_conversation_id"
+    t.index ["organization_id"], name: "index_ai_token_usages_on_organization_id"
+  end
+
   create_table "appointment_permissions", force: :cascade do |t|
     t.bigint "appointment_id", null: false
     t.datetime "created_at", null: false
@@ -56,6 +69,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_024739) do
 
   create_table "appointments", force: :cascade do |t|
     t.string "appointment_type", null: false
+    t.bigint "conversation_id"
     t.datetime "created_at", null: false
     t.bigint "created_by_id"
     t.datetime "ends_at", null: false
@@ -67,6 +81,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_024739) do
     t.string "status", default: "aguardando", null: false
     t.bigint "unit_id", null: false
     t.datetime "updated_at", null: false
+    t.datetime "whatsapp_confirmation_sent_at"
+    t.index ["conversation_id"], name: "index_appointments_on_conversation_id"
     t.index ["created_by_id"], name: "index_appointments_on_created_by_id"
     t.index ["follow_up_of_id"], name: "index_appointments_on_follow_up_of_id"
     t.index ["organization_id"], name: "index_appointments_on_organization_id"
@@ -149,6 +165,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_024739) do
 
   create_table "organizations", force: :cascade do |t|
     t.boolean "ai_enabled", default: false, null: false
+    t.text "ai_instructions"
+    t.string "ai_model", default: "gpt_4o_mini", null: false
+    t.text "ai_phone_numbers", default: [], null: false, array: true
+    t.string "ai_phone_policy", default: "all", null: false
     t.datetime "created_at", null: false
     t.string "name"
     t.string "slug"
@@ -257,10 +277,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_024739) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "ai_token_usages", "conversations"
+  add_foreign_key "ai_token_usages", "organizations"
   add_foreign_key "appointment_permissions", "appointments"
   add_foreign_key "appointment_permissions", "users"
   add_foreign_key "appointment_permissions", "users", column: "granted_by_id"
   add_foreign_key "appointments", "appointments", column: "follow_up_of_id"
+  add_foreign_key "appointments", "conversations"
   add_foreign_key "appointments", "organizations"
   add_foreign_key "appointments", "patients"
   add_foreign_key "appointments", "professionals"
