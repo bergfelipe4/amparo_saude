@@ -111,7 +111,7 @@ GEM
     et-orbi (1.4.0)
       tzinfo
     event_stream_parser (1.0.0)
-    excon (1.7.0)
+    excon (1.7.2)
       logger
     faraday (2.14.3)
       faraday-net_http (>= 2.0, < 3.5)
@@ -483,7 +483,7 @@ CHECKSUMS
   erubi (1.13.1) sha256=a082103b0885dbc5ecf1172fede897f9ebdb745a4b97a5e8dc63953db1ee4ad9
   et-orbi (1.4.0) sha256=6c7e3c90779821f9e3b324c5e96fda9767f72995d6ae435b96678a4f3e2de8bc
   event_stream_parser (1.0.0) sha256=a2683bab70126286f8184dc88f7968ffc4028f813161fb073ec90d171f7de3c8
-  excon (1.7.0) sha256=b8deec2bf978123b7e4b13a103ffec61557c6feaba34706dbc1ce4a94dec33e0
+  excon (1.7.2) sha256=2557b17420f134f00de79cc52abd325d5767291e23af7ddd03ee07952189a569
   faraday (2.14.3) sha256=1882247e6766615c8220b4392bf1d27f6ebb63d8e28267587cef1fb0bf37f278
   faraday-excon (2.4.0) sha256=2a07ff3583468468eb62325c6263d0b2dd39282a8de7dc35908d782de531c8f6
   faraday-multipart (1.2.0) sha256=7d89a949693714176f612323ca13746a2ded204031a6ba528adee788694ef757
